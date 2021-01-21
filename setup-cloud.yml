@@ -1,0 +1,8 @@
+---
+- hosts: all
+  roles:
+#    - cloud-docker
+    - cloud-domain
+    - cloud-proxy
+    - cloud-database
+    
