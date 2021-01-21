@@ -1,0 +1,5 @@
+---
+- name: "Install cloud database"
+  include: "database-{{ hostvars[inventory_hostname][item].database.vendor }}.yml"
+  loop: "{{ features }}"
+  when: "hostvars[inventory_hostname][item].database is defined"

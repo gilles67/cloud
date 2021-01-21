@@ -1,0 +1,78 @@
+---
+- name: "Define current scope values"
+  set_fact: 
+    current_item: "{{ hostvars[inventory_hostname][item] }}"
+
+- name: "Feature item values"
+  debug: 
+    var: current_item
+
+- name: Create mariadb data volume
+  docker_volume:
+    name: "{{ current_item.name | lower }}_mariadb_data"
+    state: present
+
+- name: Create mariadb container
+  docker_container:
+    name: "db.{{ current_item.name | lower }}"
+    state: present
+    restart_policy: unless-stopped
+    image: "mariadb:{{ mariadb_version }}"
+    volumes:
+      - "{{ current_item.name | lower }}_mariadb_data:/var/lib/mysql"
+    env:
+      TZ: "{{ timezone }}"
+      MYSQL_ROOT_PASSWORD: "{{ current_item.database.root_password }}"
+      MYSQL_DATABASE: "{{ current_item.name | lower }}"
+      MYSQL_USER: "{{ current_item.name | lower }}"
+      MYSQL_PASSWORD: "{{ current_item.database.user_password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+
+- name: Start mariadb container
+  docker_container:
+    name: "db.{{ current_item.name | lower }}"
+    state: started
+
+- name: Create phpmyadmin container
+  docker_container:
+    name: "admin.db.{{ current_item.name | lower }}"
+    state: present
+    restart_policy: unless-stopped
+    image: "phpmyadmin:{{ phpmyadmin_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      PMA_HOST: "db.{{ current_item.name | lower }}"
+      MYSQL_ROOT_PASSWORD: "{{ current_item.database.root_password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      traefik.enable: "true"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}.rule": "Host(`{{ current_item.database.admin_hostname  }}`)"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}.entrypoints": "web"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}.middlewares": "httpsredirect@file"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}-ssl.rule": "Host(`{{ current_item.database.admin_hostname  }}`)"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}-ssl.entrypoints": "websecure"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}-ssl.middlewares": "header-admindb-{{ current_item.name | lower }},auth-admindb-{{ current_item.name | lower }},hsts@file,httpsredirect@file"
+      "traefik.http.middlewares.auth-admindb-{{ current_item.name | lower }}.forwardauth.address": "https://{{ current_item.database.admin_authforward }}/forward/auth"
+      "traefik.http.middlewares.auth-admindb-{{ current_item.name | lower }}.forwardauth.trustForwardHeader": "true"
+      "traefik.http.middlewares.header-admindb-{{ current_item.name | lower }}.headers.customrequestheaders.X-Auth-Service": "{{ current_item.database.admin_hostname }}"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}-ssl.tls.certresolver": "letsencrypt"
+      "traefik.http.routers.admindb-{{ current_item.name | lower }}-ssl.tls.options": "intermediate@file"
+      "traefik.http.services.admindb-{{ current_item.name | lower }}-ssl.loadbalancer.server.port": "8080"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+  when:
+    - current_item.database.admin_hostname is defined
+
+- name: Start mariadb container
+  docker_container:
+    name: "admin.db.{{ current_item.name | lower }}"
+    state: started
+  when:
+    - current_item.database.admin_hostname is defined
