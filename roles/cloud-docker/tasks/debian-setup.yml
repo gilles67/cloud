@@ -1,0 +1,41 @@
+---
+# Install docker repo key
+- name: Install Docker repository key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+
+# Install docker repo
+- name: Install Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release | lower }} stable"
+    state: present
+  when: 
+    - ansible_architecture == "x86_64"
+
+# Install docker packages
+- name: Install Docker packages
+  apt:
+    name: "{{ item }}"
+    install_recommends: no
+    update_cache: yes
+  loop: 
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - python3-docker
+
+- name: Enable Docker
+  systemd:
+    name: docker
+    enabled: yes
+    masked: no
+
+- name: Configure Docker
+  template:
+    src: daemon.json.j2
+    dest: "/etc/docker/daemon.json"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - restart_docker

@@ -1,0 +1,11 @@
+---
+- name: Create a network bridges
+  docker_network:
+    name: "{{ item.name }}"
+    driver: "bridge"
+    enable_ipv6: yes
+    ipam_config:
+      - subnet: "{{ item.ipv6 }}"
+    driver_options:
+      com.docker.network.bridge.name: "{{ item.br }}"
+  loop: "{{ docker.network.bridge }}"

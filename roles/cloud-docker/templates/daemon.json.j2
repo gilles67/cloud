@@ -1,0 +1,10 @@
+{
+        "ipv6": true,
+        "fixed-cidr-v6": "{{ docker.network.docker0.ipv6 }}",
+        "dns": ["{{ docker.network.dns | join('", "') }}"],
+        "dns-search": ["{{ docker.network.search | join('", "') }}"],
+        "bip": "169.254.0.1/28",
+        "default-address-pools": [ { "base": "169.254.0.0/24", "size": 28 } ],
+        "iptables": false,
+        "selinux-enabled": true
+}

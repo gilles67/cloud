@@ -1,0 +1,6 @@
+---
+# handlers file for cloud-docker
+- name: restart_docker
+  service:
+    name: docker
+    state: restarted

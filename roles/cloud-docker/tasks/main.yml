@@ -1,0 +1,7 @@
+---
+# Specific distribution
+- name: "{{ ansible_distribution }} Docker Setup"
+  include: "{{ ansible_distribution | lower }}-setup.yml"
+
+- name: "Docker Network Setup"
+  include: "network.yml"
