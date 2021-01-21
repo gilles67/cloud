@@ -1,0 +1,99 @@
+---
+- name: Create domain bind9 cache volume
+  docker_volume:
+    name: "{{ domain.name | lower }}_bind9_cache"
+    state: present
+
+- name: Configuration domain bind9 folder
+  file:
+    path: "/opt/cloud/{{ domain.name | lower }}/dns/bind9/"
+    state: directory
+    recurse: yes
+
+- name: Generate domain bind9 configuration files
+  template:
+    src: "{{ file_config }}.j2"
+    dest: "/opt/cloud/{{ domain.name | lower }}/dns/bind9/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+   - "named.conf.options"
+  loop_control:
+    loop_var: "file_config"
+
+- name: Create domain bind9 container
+  docker_container:
+    name: "dns.{{ domain.name | lower }}"
+    state: present
+    restart_policy: unless-stopped
+    image: "internetsystemsconsortium/bind9:{{ bind9_version }}"
+    volumes:
+      - "{{ domain.name | lower }}_bind9_cache:/var/cache/bind"
+      - "/opt/cloud/{{ domain.name | lower }}/dns/bind9/named.conf.options:/etc/bind/named.conf.options:ro"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ domain.network }}"
+        ipv6_address: "{{ domain.ipv6 }}"
+
+- name: Start domain bind9 container
+  docker_container:
+    name: "dns.{{ domain.name | lower }}"
+    state: started
+
+- name: Firewall bind9 (tcp/udp) 53
+  ufw:
+    rule: allow
+    route: yes
+    src: "2a0e:e701:1123::/48"
+    dest: "{{ domain.ipv6 }}"
+    proto: "{{ item }}"
+    port: "53"
+  loop: 
+    - "tcp"
+    - "udp"
+
+- name: Firewall bind9 (tcp/udp) 53
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ domain.ipv6 }}"
+    dest: "2a0e:e701:1123::/48"
+    proto: "udp"
+    from_port: "53"
+
+- name: Firewall bind9 forwarders
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ domain.ipv6 }}"
+    dest: "{{ item.0 }}"
+    proto: "{{ item.1 }}"
+    port: "53"
+  with_nested: 
+    - "{{ domain.forwarders }}"
+    - ["tcp", "udp"]
+
+- name: Firewall bind9 forwarders
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ item }}"
+    dest: "{{ domain.ipv6 }}"
+    proto: "udp"
+    from_port: "53"
+  loop: "{{ domain.forwarders }}"
+
+- name: Firewall bind9 forwarders
+  ufw:
+    rule: allow
+    src: "{{ item }}"
+    dest: "{{ domain.ipv6 }}"
+    proto: "udp"
+    from_port: "53"
+  loop: "{{ domain.forwarders }}"

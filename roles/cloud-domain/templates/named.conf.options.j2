@@ -1,0 +1,14 @@
+options {
+    allow-query { any; };
+    directory "/var/cache/bind";
+    recursion yes;
+    forwarders {
+{% for forwarder in domain.forwarders %}
+        {{ forwarder }};
+{% endfor %}
+    };
+    #forward only;
+    querylog yes;
+    dnssec-validation auto;
+    listen-on-v6 { any; };
+};
