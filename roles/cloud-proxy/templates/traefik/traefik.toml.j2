@@ -1,0 +1,31 @@
+defautlEntryPoints = ["web","websecure"]
+
+[entryPoints]
+[entryPoints.web]
+address = ":80"
+[entryPoints.websecure]
+address = ":443"
+
+[certificatesResolvers]
+[certificatesResolvers.letsencrypt]
+[certificatesResolvers.letsencrypt.acme]
+email = "{{ current_item.proxy.email_contact }}"
+storage = "/etc/traefik/acme.json"
+[certificatesResolvers.letsencrypt.acme.httpChallenge]
+entryPoint = "web"
+
+[providers.docker]
+exposedbydefault = false
+
+[providers.file]
+filename = "/etc/traefik/dynamic.toml"
+
+[api]
+dashboard = true
+
+[log]
+level = "INFO"
+format = "json"
+
+[accessLog]
+format = "json"

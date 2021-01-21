@@ -1,0 +1,5 @@
+---
+- name: "Install cloud proxy"
+  include: "proxy-{{ hostvars[inventory_hostname][item].proxy.vendor }}.yml"
+  loop: "{{ features }}"
+  when: "hostvars[inventory_hostname][item].proxy is defined"

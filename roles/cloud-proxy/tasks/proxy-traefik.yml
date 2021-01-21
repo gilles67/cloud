@@ -1,0 +1,78 @@
+---
+- name: "Define current scope values"
+  set_fact: 
+    current_item: "{{ hostvars[inventory_hostname][item] }}"
+
+- name: "Feature item values"
+  debug: 
+    var: current_item
+
+- name: Create traefik data volume
+  docker_volume:
+    name: "{{ current_item.name | lower }}_traefik_data"
+    state: present
+
+- name: Configuration traefik folder
+  file:
+    path: "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/"
+    state: directory
+    recurse: yes
+
+- name: Generate traefik configuration files
+  template:
+    src: "traefik/{{ file_config }}.j2"
+    dest: "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+   - "traefik.toml"
+   - "dynamic.toml"
+  loop_control:
+    loop_var: "file_config"
+
+- name: Create traefik container
+  docker_container:
+    name: "proxy.{{ current_item.name | lower }}"
+    state: present
+    restart_policy: unless-stopped
+    image: "traefik:{{ traefik_version }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ current_item.name | lower }}_traefik_data:/etc/traefik"
+      - "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
+      - "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/dynamic.toml:/etc/traefik/dynamic.toml:ro"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.nhfw.firewall.rule.proxy_http.server.tcp: "80"
+      one.h42.nhfw.firewall.rule.proxy_http.server.client: "::/0"
+      one.h42.nhfw.firewall.rule.proxy_https.server.tcp: "443"
+      one.h42.nhfw.firewall.rule.proxy_https.server.client: "::/0"
+      "traefik.enable": "true"
+      "traefik.http.routers.traefik.rule": "Host(`{{ current_item.proxy.admin_hostname }}`)"
+      "traefik.http.routers.traefik.middlewares": "hsts@file,httpsredirect@file"
+      "traefik.http.routers.traefik.entrypoints": "web"
+      "traefik.http.routers.traefik.service": "noop@internal"
+      "traefik.http.routers.traefikssl.rule": "Host(`{{ current_item.proxy.admin_hostname }}`)"
+      "traefik.http.routers.traefikssl.service": "api@internal"
+      "traefik.http.routers.traefikssl.middlewares": "hsts@file,httpsredirect@file"
+#      "traefik.http.routers.traefikssl.middlewares": "traefikheaders,authtraefik,hsts@file,httpsredirect@file"
+      "traefik.http.routers.traefikssl.entrypoints": "websecure"
+#      "traefik.http.middlewares.authtraefik.forwardauth.address": "https://{{ current_item.proxy.admin_authforward }}/forward/auth"
+#      "traefik.http.middlewares.authtraefik.forwardauth.trustForwardHeader": "true"
+#      "traefik.http.middlewares.traefikheaders.headers.customrequestheaders.X-Auth-Service": "{{ current_item.proxy.admin_hostname }}"
+      "traefik.http.routers.traefikssl.tls.certresolver": "letsencrypt"
+      "traefik.http.routers.traefikssl.tls.options": "intermediate@file"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+        ipv6_address: "{{ current_item.proxy.ipv6 }}"
+
+- name: Start traefik container
+  docker_container:
+    name: "proxy.{{ current_item.name | lower }}"
+    state: started
+
