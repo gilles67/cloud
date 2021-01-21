@@ -1,0 +1,6 @@
+---
+- name: "Install cloud web server"
+  include: "web-{{ hostvars[inventory_hostname][item].web.vendor }}.yml"
+  loop: "{{ features }}"
+  when: "hostvars[inventory_hostname][item].web is defined"
+
