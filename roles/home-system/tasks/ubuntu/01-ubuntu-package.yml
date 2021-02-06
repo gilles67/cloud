@@ -1,0 +1,25 @@
+---
+# Remove packages see vars/main.yml to list packages 
+- name: Remove packages
+  apt:
+    name: "{{ item }}"
+    state: absent
+    purge: yes
+  loop: "{{ ubuntu_pkg_remove }}"
+
+# Automatic package remove
+- name: Autoremove packages
+  apt: 
+    autoremove: yes
+
+# Automatic clean cache
+#- name: Clean packages cache
+#  apt:
+#    autoclean: yes
+
+# Upgrade packages
+- name: Upgrade packages
+  apt:
+    name: "*"
+    state: latest
+    update_cache: yes

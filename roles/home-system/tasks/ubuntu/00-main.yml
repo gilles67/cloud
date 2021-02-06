@@ -1,0 +1,15 @@
+---
+# Step 1 : Remove ubuntu-server packages
+- name: "{{ ansible_distribution }} Packages Processing"
+  include: "{{ ansible_distribution | lower }}/01-ubuntu-package.yml"
+
+# Step 2 : Network interface configuration
+- name: "{{ ansible_distribution }} Network setup"
+  include: "{{ ansible_distribution | lower }}/02-network-setup.yml"
+  with_items: "{{ system.network }}"
+  loop_control:
+    loop_var: "netitem"
+
+# Step 3 : Security configuration
+- name: "{{ ansible_distribution }} Security Setup"
+  include: "{{ ansible_distribution | lower }}/03-security-setup.yml"

@@ -1,0 +1,6 @@
+[NetDev]
+Name={{ network_setup.lan.name }}
+Kind=bridge
+{% if network_setup.lan.mac is defined %}
+MACAddress={{ network_setup.lan.mac }}
+{% endif %}

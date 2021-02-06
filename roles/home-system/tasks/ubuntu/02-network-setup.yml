@@ -1,0 +1,38 @@
+---
+- name: Generate lan-bridge file
+  template:
+    src: ubuntu/systemd/networkd/bridge.netdev.j2
+    dest: "/etc/systemd/network/bridge-{{ netitem.if }}.netdev"
+    owner: root
+    group: root  
+    mode: '0644'
+  when: 
+    - netitem.if is defined
+    - netitem.if is regex("^br")
+  notify:
+    - restart_networkd
+
+- name: Generate lan-member file
+  template:
+    src: ubuntu/systemd/networkd/bridge-member.network.j2
+    dest: "/etc/systemd/network/bridge-{{ netitem.if }}-member-{{ item }}.network"
+    owner: root
+    group: root  
+    mode: '0644'
+  loop: "{{ netitem.members }}"
+  when:
+    - netitem.members is defined
+    - netitem.if is regex("^br")
+  notify:
+    - restart_networkd
+
+- name: Generate lan-interface file
+  template:
+    src: ubuntu/systemd/networkd/interface.network.j2
+    dest: "/etc/systemd/network/interface-{{ netitem.if }}.network"
+    owner: root
+    group: root  
+    mode: '0644'
+  when: netitem.if is defined
+  notify:
+    - restart_networkd

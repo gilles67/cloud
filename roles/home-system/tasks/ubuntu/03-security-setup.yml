@@ -1,0 +1,30 @@
+---
+# Install security packages
+- name: Install security packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    install_recommends: no
+  loop: "{{ ubuntu_pkg_security }}"
+
+# Configure Firewall
+- name: Firewall allow OpenSSH
+  ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Firewall activation
+  ufw:
+    state: enabled
+    policy: deny
+
+- name: Firewall activate logs
+  ufw:
+    logging: 'on'
+
+# Direct Root connection
+- name: Copy authorized_keys to root
+  copy:
+    src: /home/ansible/.ssh/authorized_keys
+    dest: /root/.ssh/authorized_keys
+    remote_src: yes

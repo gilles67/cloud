@@ -1,0 +1,16 @@
+[Match]
+Name={{ netitem.if }}
+
+[Network]
+{% if netitem.ipv4.address is defined %}
+Address={{ netitem.ipv4.address }}
+{% endif %}
+{% if netitem.ipv6.prefix is defined %}
+Address={{ netitem.ipv6.prefix }}1/64
+{% endif %}
+{% if netitem.dhcp is defined %}
+DHCP={{ netitem.dhcp }}
+{% endif %}
+{% if netitem.privacy is defined %}
+IPv6PrivacyExtensions={{ netitem.privacy }}
+{% endif %}

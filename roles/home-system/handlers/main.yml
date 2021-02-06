@@ -1,0 +1,5 @@
+## Ubuntu
+- name: restart_networkd
+  service:
+    name: systemd-networkd
+    state: restarted

@@ -1,0 +1,27 @@
+---
+ubuntu_pkg_remove:
+  - alsa-topology-conf
+  - alsa-ucm-conf
+  - cloud-guest-utils
+  - cloud-init
+  - cloud-initramfs-copymods
+  - cloud-initramfs-dyn-netconf
+  - command-not-found
+  - netplan.io
+  - ubuntu-server
+  - snapd
+  - apport
+  - apport-symptoms
+  - bolt
+  - byobu
+  - plymouth
+  - plymouth-theme-ubuntu-text
+  - sound-theme-freedesktop
+  - open-vm-tools
+
+ubuntu_pkg_security:
+  - ufw
+  - fail2ban
+  - policycoreutils
+  - selinux-utils
+  - selinux-basics
