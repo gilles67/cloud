@@ -1,0 +1,9 @@
+---
+- name: "Install brocker"
+  include: "broker-{{ hostvars[inventory_hostname].features[fitem].broker.vendor }}.yml"
+  loop: "{{ features.keys() | list }}"
+  loop_control:
+    loop_var: "fitem"
+  when: 
+    - hostvars[inventory_hostname].features[fitem].broker is defined
+    - hostvars[inventory_hostname].features[fitem].broker.vendor is defined

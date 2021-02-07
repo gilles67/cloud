@@ -1,0 +1,22 @@
+---
+- name: "Define current scope values"
+  set_fact: 
+    current_item: "{{ hostvars[inventory_hostname].features[fitem] }}"
+
+- name: "Create Eclipse Mosquitto container"
+  docker_container:
+    name: "broker.{{ current_item.name | default(fitem) | lower }}"
+    state: present
+    restart_policy: unless-stopped
+    image: "eclipse-mosquitto:{{ mosquitto_version }}"
+    env:
+      TZ: "{{ timezone }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+        ipv6_address: "{{ current_item.broker.ipv6 }}"
+
+- name: "Start Eclipse Mosquitto container"
+  docker_container:
+    name: "broker.{{ current_item.name | default(fitem) | lower }}"
+    state: started
