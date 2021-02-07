@@ -1,0 +1,26 @@
+---
+- name: Firewall docker0 dns
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ docker.network.docker0.ipv6 }}"
+    dest: "{{ item.0 }}"
+    proto: "{{ item.1 }}"
+    port: "53"
+  with_nested:
+    - "{{ docker.network.dns }}"
+    - ["tcp", "udp"]
+
+- name: Firewall other bridge
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ item.2.ipv6  }}"
+    dest: "{{ item.0 }}"
+    proto: "{{ item.1 }}"
+    port: "53"
+  with_nested: 
+    - "{{ docker.network.dns }}"
+    - ["tcp", "udp"]
+    - "{{ docker.network.bridge }}"
+

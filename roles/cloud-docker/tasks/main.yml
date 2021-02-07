@@ -1,7 +1,17 @@
 ---
 # Specific distribution
-- name: "{{ ansible_distribution }} Docker Setup"
-  include: "{{ ansible_distribution | lower }}-setup.yml"
+- name: "{{ ansible_distribution }} Docker setup"
+  include: "setup-{{ ansible_distribution | lower }}.yml"
+  when: docker is defined
 
-- name: "Docker Network Setup"
+- name: "Docker network setup"
   include: "network.yml"
+  when: docker is defined
+
+- name: "Firewall setup for Docker"
+  include: "firewall.yml"
+  when: 
+    - docker is defined
+    - wireguard is defined
+    - side == "home"
+  
