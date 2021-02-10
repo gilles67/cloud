@@ -1,0 +1,24 @@
+---
+- name: Firewall master bind9 (tcp/udp) IPv6
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.domain.master.ipv6 }}"
+    proto: "{{ item }}"
+    port: "53"
+  loop: 
+    - "tcp"
+    - "udp"
+
+- name: Firewall master bind9 (tcp/udp) IPv4
+  ufw:
+    rule: allow
+    route: yes
+    src: "any"
+    dest: "{{ features.domain.master.ipv4 }}"
+    proto: "{{ item }}"
+    port: "53"
+  loop: 
+    - "tcp"
+    - "udp"

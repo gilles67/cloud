@@ -1,0 +1,54 @@
+---
+- name: "Create domain bind9 cache volume"
+  docker_volume:
+    name: "recursive_bind9_cache"
+    state: present
+
+- name: "Configuration domain bind9 folder"
+  file:
+    path: "/opt/cloud/domain/bind9/recursive"
+    state: directory
+    recurse: yes
+
+- name: "Generate domain bind9 configuration files"
+  template:
+    src: "recursive/{{ file_config }}.j2"
+    dest: "/opt/cloud/domain/bind9/recursive/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+   - "named.conf.options"
+   - "named.conf.local"
+  loop_control:
+    loop_var: "file_config"
+
+- name: "Firewall bind9 recursive"
+  include: "bind9-recursive-firewall.yml"
+
+- name: Create domain bind9 container
+  docker_container:
+    name: "domain.recursive"
+    state: present
+    restart_policy: unless-stopped
+    image: "internetsystemsconsortium/bind9:{{ bind9_version }}"
+    volumes:
+      - "recursive_bind9_cache:/var/cache/bind"
+      - "/opt/cloud/domain/bind9/recursive/named.conf.options:/etc/bind/named.conf.options:ro"
+      - "/opt/cloud/domain/bind9/recursive/named.conf.local:/etc/bind/named.conf.local:ro"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.domain.network }}"
+        ipv6_address: "{{ features.domain.recursive.ipv6 }}"
+        ipv4_address: "{{ features.domain.recursive.ipv4 }}"
+
+- name: Start domain bind9 container
+  docker_container:
+    name: "domain.recursive"
+    state: started
+

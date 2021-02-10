@@ -1,0 +1,30 @@
+---
+- name: "Check zone key file"
+  shell: docker exec domain.master test -f /etc/bind/zones/key/tsig-{{ zone }}.key
+  register: zone_key_stat
+  failed_when: not zone_key_stat.stderr == ""
+  changed_when: no
+
+- name: "Generate zone key"
+  shell: docker exec domain.master /bin/bash -c "/usr/sbin/tsig-keygen -a hmac-sha512 tsig-{{ zone }} > /etc/bind/zones/key/tsig-{{ zone }}.key"
+  when: not zone_key_stat.rc == 0
+
+- name: "Check zone db file"
+  shell: docker exec domain.master test -f /etc/bind/zones/db/db-{{ zone }}
+  register: zone_db_stat
+  failed_when: not zone_db_stat.stderr == ""
+  changed_when: no
+
+- name: "Generate domain zone file"
+  template:
+    src: "master/zone.db.j2"
+    dest: "/opt/cloud/domain/bind9/master/init/db-{{ zone }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: not zone_db_stat.rc == 0
+
+- name: "Install zone db"
+  shell: "docker cp /opt/cloud/domain/bind9/master/init/db-{{ zone }} domain.master:/etc/bind/zones/db/db-{{ zone }}"
+  when: not zone_db_stat.rc == 0
+

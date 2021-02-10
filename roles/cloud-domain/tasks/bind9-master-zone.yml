@@ -1,0 +1,51 @@
+---
+# Create zones key folder
+- name: "Check zone key folder"
+  shell: "docker exec domain.master test -d /etc/bind/zones/key"
+  register: key_dir_stat
+  failed_when: not key_dir_stat.stderr == ""
+  changed_when: no
+
+- name: "Create zone key folder"
+  shell: "docker exec domain.master mkdir -p /etc/bind/zones/key"
+  when: not key_dir_stat.rc == 0
+
+# Create zones db folder
+- name: "Check zone db folder"
+  shell: "docker exec domain.master test -d /etc/bind/zones/db"
+  register: db_dir_stat
+  failed_when: not db_dir_stat.stderr == ""
+  changed_when: no
+
+- name: "Create zone db folder"
+  shell: "docker exec domain.master mkdir -p /etc/bind/zones/db"
+  when: not db_dir_stat.rc == 0
+
+- name: "Set user zone db folder"
+  shell: "docker exec domain.master chown bind:bind /etc/bind/zones/db"
+  when: not db_dir_stat.rc == 0
+
+# Generate zone files
+- name: "Zone update key"
+  include: "zone-key.yml"
+  loop: "{{ features.domain.master.zones }}"
+  loop_control:
+    loop_var: "zone"
+
+# Generate named.conf.local
+- name: "Generate domain bind9 configuration files"
+  template:
+    src: "master/named.conf.local.j2"
+    dest: "/opt/cloud/domain/bind9/master/named.conf.local"
+    owner: root
+    group: root
+    mode: '0644'
+  register: local_conf_stat
+
+# Restart master bind9
+- name: Restart domain bind9 container
+  docker_container:
+    name: "domain.master"
+    state: started
+    restart: yes
+  when: local_conf_stat.changed

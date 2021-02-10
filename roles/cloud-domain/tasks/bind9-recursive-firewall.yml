@@ -1,0 +1,24 @@
+---
+- name: Firewall bind9 recursive
+  ufw:
+    rule: allow
+    route: yes
+    src: "2a0e:e701:1123::/48"
+    dest: "{{ features.domain.recursive.ipv6 }}"
+    proto: "{{ item }}"
+    port: "53"
+  loop: 
+    - "tcp"
+    - "udp"
+
+- name: Firewall bind9 recursive forwarders
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.domain.recursive.ipv6 }}"
+    dest: "any"
+    proto: "{{ item }}"
+    port: "53"
+  loop: 
+    - "tcp"
+    - "udp"

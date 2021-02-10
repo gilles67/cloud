@@ -1,0 +1,69 @@
+---
+- name: "Create domain bind9 cache volume"
+  docker_volume:
+    name: "master_bind9_cache"
+    state: present
+
+- name: "Create domain bind9 zones volume"
+  docker_volume:
+    name: "master_bind9_zones"
+    state: present
+
+- name: "Configuration domain bind9 folder"
+  file:
+    path: "/opt/cloud/domain/bind9/master"
+    state: directory
+    recurse: yes
+
+- name: "Configuration domain init zone folder"
+  file:
+    path: "/opt/cloud/domain/bind9/master/init"
+    state: directory
+    recurse: yes
+
+- name: "Create empty file : named.conf.local"
+  file:
+    path: "/opt/cloud/domain/bind9/master/named.conf.local"
+    state: touch
+
+- name: "Generate domain bind9 configuration files"
+  template:
+    src: "master/named.conf.options.j2"
+    dest: "/opt/cloud/domain/bind9/master/named.conf.options"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Firewall bind9 master"
+  include: "bind9-master-firewall.yml"
+
+- name: Create domain bind9 container
+  docker_container:
+    name: "domain.master"
+    state: present
+    restart_policy: unless-stopped
+    image: "internetsystemsconsortium/bind9:{{ bind9_version }}"
+    volumes:
+      - "master_bind9_cache:/var/cache/bind"
+      - "master_bind9_zones:/etc/bind/zones"
+      - "/opt/cloud/domain/bind9/master/named.conf.options:/etc/bind/named.conf.options:ro"
+      - "/opt/cloud/domain/bind9/master/named.conf.local:/etc/bind/named.conf.local:ro"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.domain.network }}"
+        ipv6_address: "{{ features.domain.master.ipv6 }}"
+        ipv4_address: "{{ features.domain.master.ipv4 }}"
+
+- name: Start domain bind9 container
+  docker_container:
+    name: "domain.master"
+    state: started
+
+- name: "Zone file generating"
+  include: "bind9-master-zone.yml"
+  when: features.domain.master.zones is defined
