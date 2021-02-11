@@ -5,7 +5,7 @@
 
 - name: "Create Eclipse Mosquitto container"
   docker_container:
-    name: "broker.{{ current_item.name | default(fitem) | lower }}"
+    name: "{{ current_item.name | default(fitem) | lower }}.broker"
     state: present
     restart_policy: unless-stopped
     image: "eclipse-mosquitto:{{ mosquitto_version }}"
@@ -18,5 +18,5 @@
 
 - name: "Start Eclipse Mosquitto container"
   docker_container:
-    name: "broker.{{ current_item.name | default(fitem) | lower }}"
+    name: "{{ current_item.name | default(fitem) | lower }}.broker"
     state: started
