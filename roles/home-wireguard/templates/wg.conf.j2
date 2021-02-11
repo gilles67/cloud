@@ -1,0 +1,32 @@
+[Interface]
+PrivateKey = {{ wg_private_key[wgitem.if] }}
+Address = {{ wgitem.address }}
+ListenPort = {{ wgitem.port }}
+{% if wgitem.mode == "child"%}
+{% if wgitem.table is defined %}
+Table = {{ wgitem.table }}
+PostUp = /bin/ip -6 rule add fwmark 242 table {{ wgitem.table }}
+PostDown = /bin/ip -6 rule del fwmark 242 table {{ wgitem.table }}
+PostUp = /sbin/ip6tables -t mangle -A PREROUTING -i docker0 -j MARK --set-mark 242
+{% for bridge in docker.network.bridge %}
+PostUp = /sbin/ip6tables -t mangle -A PREROUTING -i {{ bridge.br }} -j MARK --set-mark 242
+{% endfor %}
+PostDown = /sbin/ip6tables -t mangle -F
+{% endif %}
+{% endif %}
+
+{% for item in wg_peer_db %}
+{% if item != inventory_hostname %}
+[Peer]
+PublicKey = {{ wg_peer_db[item]['pubkey'] }}
+{% if wg_peer_db[item]['mode'] == "gateway" %}
+AllowedIPs = ::/0
+Endpoint = {{ wg_peer_db[item]['gateway'] }}
+PersistentKeepalive = 25
+{% endif %}
+{% if wg_peer_db[item]['mode'] == "child" %}
+AllowedIPs = {{ wg_peer_db[item]['networks'] | join(', ') }}, {{ wg_peer_db[item]['address'] }}
+{% endif %}
+
+{% endif %}
+{% endfor %}

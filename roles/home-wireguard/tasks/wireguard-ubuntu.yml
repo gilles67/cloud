@@ -1,0 +1,10 @@
+---
+# Install wireguard packages
+- name: Install wireguard packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    install_recommends: no
+  loop:
+    - wireguard
+    - wireguard-tools

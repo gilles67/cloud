@@ -1,0 +1,53 @@
+---
+# Load database
+- name: "Load database file"
+  yedit:
+    src: "/home/gilles/db/{{ wgitem.db }}-db.yml"
+    state: list
+    key: hosts
+  delegate_to: localhost
+  become: no
+  register: yeditout
+- name: "Load database in fact"
+  set_fact:
+    wg_peer_db: "{{ yeditout.result }}"
+
+- debug: 
+    var: wg_peer_db
+
+- name: "Define route table {{ wgitem.table }}"
+  template:
+    src: rt_table.conf.j2
+    dest: /etc/iproute2/rt_tables.d/{{ wgitem.table }}.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - wgitem.table is defined
+
+- name: Create Wireguard configuration
+  template:
+    src: wg.conf.j2
+    dest: /etc/wireguard/{{ wgitem.if }}.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: wg_config_update
+
+- name: "Enable Wireguard {{ wgitem.if }}"
+  systemd:
+    name: "wg-quick@{{ wgitem.if }}"
+    enabled: yes
+    masked: no
+  
+- name: Firewall allow Wireguard
+  ufw:
+    rule: allow
+    port: "{{ wgitem.port }}"
+    proto: udp
+
+- name: "Restart Wireguard"
+  systemd:
+    name: "wg-quick@{{ wgitem.if }}"
+    state: restarted 
+  when: wg_config_update.changed

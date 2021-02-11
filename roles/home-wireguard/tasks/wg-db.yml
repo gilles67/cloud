@@ -1,0 +1,26 @@
+---
+- name: "Update local DB [{{ wgitem.db }}] child mode"
+  yedit:
+    src: "/home/gilles/db/{{ wgitem.db }}-db.yml"
+    key: "hosts.{{ inventory_hostname }}"
+    value:
+      pubkey: "{{ wg_public_key[wgitem.if] }}"
+      networks: "{{ wgitem.networks }}"
+      address: "{{ wgitem.address }}"
+      mode: "child"
+  delegate_to: localhost
+  become: no
+  when: wgitem.mode == "child"
+
+- name: "Update local DB [{{ wgitem.db }}] gateway mode"
+  yedit:
+    src: "/home/gilles/db/{{ wgitem.db }}-db.yml"
+    key: "hosts.{{ inventory_hostname }}"
+    value:
+      pubkey: "{{ wg_public_key[wgitem.if] }}"
+      networks: ["::/0"]
+      gateway: "{{ wgitem.gateway }}:{{ wgitem.port }}"
+      mode: "gateway"
+  delegate_to: localhost
+  become: no
+  when: wgitem.mode == "gateway"

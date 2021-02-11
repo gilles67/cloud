@@ -1,0 +1,40 @@
+---
+# Specific distribution
+- name: "{{ ansible_distribution }} Wireguard Setup"
+  include: "wireguard-{{ ansible_distribution | lower }}.yml"
+  when: wireguard is defined
+
+- name: "Generate Wireguard key pair"
+  include: "wg-keys.yml"
+  with_items: "{{ wireguard }}"
+  loop_control:
+    loop_var: "wgitem"
+  when: wireguard is defined
+
+- name: "Update database"
+  include: "wg-db.yml"
+  with_items: "{{ wireguard }}"
+  loop_control:
+    loop_var: "wgitem"
+  when: 
+    - wireguard is defined
+    - wgitem.db is defined
+
+- name: "Configure Wireguard (wg-quick)"
+  include: "wg-configure.yml"
+  with_items: "{{ wireguard }}"
+  loop_control:
+    loop_var: "wgitem"
+  when: 
+    - wireguard is defined
+    - wgitem.db is defined
+
+- name: "Configure Firewall Wireguard <-> Docker"
+  include: "wg-configure.yml"
+  with_items: "{{ wireguard }}"
+  loop_control:
+    loop_var: "wgitem"
+  when: 
+    - wireguard is defined
+    - docker is defined
+    - wgitem.mode == "child"

@@ -1,0 +1,20 @@
+---
+## Generate and load keys
+- name: Check private key file
+  stat:
+    path: "/etc/wireguard/{{ wgitem.if }}-private.key"
+  register: wg_private_key_stat
+
+- name: Generate private/public key files
+  shell: wg genkey | tee /etc/wireguard/{{ wgitem.if }}-private.key | wg pubkey > /etc/wireguard/{{ wgitem.if }}-public.key
+  when: not wg_private_key_stat.stat.exists
+
+- name: Load private/public key
+  shell: cat /etc/wireguard/{{ wgitem.if }}-private.key; cat /etc/wireguard/{{ wgitem.if }}-public.key
+  register: wg_key_files
+  changed_when: no
+
+- name: Set private/public key fact
+  set_fact:
+    wg_private_key: "{{ wg_private_key | default({}) | combine ({ wgitem.if: wg_key_files.stdout_lines[0] }) }}"
+    wg_public_key: "{{ wg_public_key | default({}) | combine ({ wgitem.if: wg_key_files.stdout_lines[1] }) }}"
