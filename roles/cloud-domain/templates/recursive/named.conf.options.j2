@@ -22,7 +22,9 @@ options {
     allow-recursion { internal; };
     allow-transfer { "none"; };
 
-	dns64 64:ff9b::/96 {
+{% if features.domain.nat64 is defined %}
+	dns64 {{ features.domain.nat64.prefix }} {
 		clients { internal; };
 	};
+{% endif %}
 };

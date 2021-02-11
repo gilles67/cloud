@@ -27,7 +27,7 @@
 
 # Generate zone files
 - name: "Zone update key"
-  include: "zone-key.yml"
+  include: "bind9-zone-key.yml"
   loop: "{{ features.domain.master.zones }}"
   loop_control:
     loop_var: "zone"

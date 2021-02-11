@@ -1,0 +1,19 @@
+[Unit]
+Description=Tayga NAT64 Service
+After=network-online.target
+ 
+[Service]
+Type=simple
+
+ExecStartPre=/etc/tayga.pre.sh
+ExecStartPost=/etc/tayga.post.sh
+ExecStart=/sbin/tayga --pidfile /run/tayga.pid
+
+PIDFile=/run/tayga.pid
+Restart=on-failure
+ 
+# Configures the time to wait before service is stopped forcefully.
+TimeoutStopSec=300
+ 
+[Install]
+WantedBy=multi-user.target

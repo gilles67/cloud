@@ -1,0 +1,47 @@
+---
+# Step N6 : Legacy support of IPv4 : NAT64
+
+- name: Install NAT64 required packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    install_recommends: no
+  loop: "{{ ubuntu_pkg_nat64 }}"
+
+- name: Generate tayga.conf file
+  template:
+    src: nat64/tayga.conf.j2
+    dest: /etc/tayga.conf
+    owner: root
+    group: root  
+    mode: '0644'
+
+- name: Generate tayga.pre.sh file
+  template:
+    src: nat64/tayga.pre.sh.j2
+    dest: /etc/tayga.pre.sh
+    owner: root
+    group: root  
+    mode: '0755'
+
+- name: Generate tayga.post.sh file
+  template:
+    src: nat64/tayga.post.sh.j2
+    dest: /etc/tayga.post.sh
+    owner: root
+    group: root  
+    mode: '0755'
+
+- name: Generate mytayga.service file
+  template:
+    src: nat64/mytayga.service.j2
+    dest: /lib/systemd/system/mytayga.service
+    owner: root
+    group: root  
+    mode: '0644'
+
+- name: Enable tayga service
+  systemd:
+    name: mytayga
+    enabled: yes
+    masked: no

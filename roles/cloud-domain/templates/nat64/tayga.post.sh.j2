@@ -1,0 +1,12 @@
+#!/bin/sh
+
+/bin/ip link set nat64 up
+
+/sbin/sysctl -w net.ipv4.ip_forward=1
+/bin/ip -6 route add {{ features.domain.nat64.prefix }} dev nat64
+
+/sbin/iptables -t nat -A POSTROUTING -s {{ features.domain.nat64.ipv4.pool }} -o eth0 -j SNAT --to-source 45.13.104.110
+/bin/ip addr add {{ features.domain.nat64.ipv4.router }} dev nat64
+/bin/ip route add {{ features.domain.nat64.ipv4.pool }} dev nat64
+
+exit 0

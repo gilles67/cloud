@@ -10,3 +10,9 @@
   when:     
     - features is defined
     - features.domain.recursive is defined
+
+- name: "NAT64 setup"
+  include: "tayga-nat64.yml"
+  when:     
+    - features is defined
+    - features.domain.nat64 is defined
