@@ -1,7 +1,7 @@
 ---
 - name: "Define current scope values"
   set_fact: 
-    current_item: "{{ hostvars[inventory_hostname][item] }}"
+    current_item: "{{ hostvars[inventory_hostname].features[fitem] }}"
 
 - name: "Feature item values"
   debug: 
@@ -9,19 +9,19 @@
 
 - name: Create traefik data volume
   docker_volume:
-    name: "{{ current_item.name | lower }}_traefik_data"
+    name: "{{ current_item.name | default(fitem) | lower }}_traefik_data"
     state: present
 
 - name: Configuration traefik folder
   file:
-    path: "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/"
+    path: "/opt/cloud/{{ current_item.name | default(fitem) | lower }}/proxy/traefik/"
     state: directory
     recurse: yes
 
 - name: Generate traefik configuration files
   template:
     src: "traefik/{{ file_config }}.j2"
-    dest: "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/{{ file_config }}"
+    dest: "/opt/cloud/{{ current_item.name | default(fitem) | lower }}/proxy/traefik/{{ file_config }}"
     owner: root
     group: root
     mode: '0644'
@@ -31,17 +31,21 @@
   loop_control:
     loop_var: "file_config"
 
+- include: "traefik-dns.yml"
+
+- include: "traefik-firewall.yml"
+
 - name: Create traefik container
   docker_container:
-    name: "proxy.{{ current_item.name | lower }}"
+    name: "{{ current_item.name | default(fitem) | lower }}.proxy"
     state: present
     restart_policy: unless-stopped
     image: "traefik:{{ traefik_version }}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "{{ current_item.name | lower }}_traefik_data:/etc/traefik"
-      - "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
-      - "/opt/cloud/{{ current_item.name | lower }}/proxy/traefik/dynamic.toml:/etc/traefik/dynamic.toml:ro"
+      - "{{ current_item.name | default(fitem) | lower }}_traefik_data:/etc/traefik"
+      - "/opt/cloud/{{ current_item.name | default(fitem) | lower }}/proxy/traefik/traefik.toml:/etc/traefik/traefik.toml:ro"
+      - "/opt/cloud/{{ current_item.name | default(fitem) | lower }}/proxy/traefik/dynamic.toml:/etc/traefik/dynamic.toml:ro"
     env:
       TZ: "{{ timezone }}"
     labels:
@@ -73,6 +77,6 @@
 
 - name: Start traefik container
   docker_container:
-    name: "proxy.{{ current_item.name | lower }}"
+    name: "{{ current_item.name | default(fitem) | lower }}.proxy"
     state: started
 

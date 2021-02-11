@@ -1,0 +1,24 @@
+---
+- name: "Firewall proxy traefik inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ current_item.proxy.ipv6 }}"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+
+- name: "Firewall proxy traefik outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ current_item.proxy.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
