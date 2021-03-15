@@ -1,0 +1,107 @@
+#cloud-config
+autoinstall:
+  version: 1
+  keyboard:
+    layout: fr
+  identity:
+    hostname: ubuntu-server
+    password: "$6$fGNfR9MHChdkWw6g$V5aVmzb9aYJQK7bsjGCiCZVeaHMqmUpLCDw8Fs5eXb6uRErivy2DuCN7iIpbYPYqgGF81P.sBltvrStXaOrp0."
+    username: ansible
+  ssh:
+    install-server: true
+    authorized-keys:
+      - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDAkSxpkueI6lJpDPeV/vAGo79aS+n8BgD8B4cc6lZOSKyKL3nK+HFwI8uYqi86HotlKEGPPb2iW5z7VwHA9tFoFpKLB4bs8+gui/BSR8r10m8jWA8omwJUbFRLLM8Fx5FtBYh/UlNNmk3vzKO10eMn/upl28sEGF04IqaYCOvIarFPp/xWtos9n8ww3fdrKttEyfoiZ3cf5m5KSdBhkFHTQ6iJhqM55pBB+oosqKwzubOdQxSQ5K9OODIT4GWycfNK/J5yJptMjjJp2BrCenRmoL3P+pr6Muk0YFrW2ziNivemNbobyadSnwFPuD12oq3Q8vqOgjVPOxEJ+0ZFc+/oDbaKlvABoYE8iFjhoGgXTG4ZSqByhVZf1NxiT8DPvezyWfiCnltYy0XD1QBrzHAI1K5OY2OovemCrqthWEiQAZ2lP5/J30NHUBS88xvmYv6h+tig1zIpN5v1v1TXsMU9guw8YCTQidU+7yW8iiyTApty3MZT8q/PZ+rLywKwtny3pXrWreZic7kinIuX9iuw328brOih5NmkBW+RNQCo2Y13z4SsJhY/Gf7O8DZl59QOf0JjCHC/H7D67UW0Pl50tsDTjG6SoK51rHj+WfIBhfYO5VzMnGc05j2YxYPoXVQxKG9ponCN7cRqeyel9A1LLKM55+hcoohrzPlyZ6GFvw== ansible@FENRIS"
+      - "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAgEAtpru9JmmqFb+9Yd3vg9aRWKIcOtEZ9/ao85TU74AqqDCQYAXJJfmlcKc03NEPw51SuLzRryjV/nXHHmgLkHb7WwMe6e0VS0hZFnML/GCwt/TsDxAplWfcoKZdIjI5mDaCFfDza5L4B4E4YnR99SfPcBZyjtxBaRoz5JCkVjgYYbsozrcz0ESlyDIUMwRiXca7io5vgKQq3xIkFiyhNxP0k96Tg5SxdSS37cEPNumB9YM9E6XQjM3pQJ1j4FveLoOERhra2VoHLvkRLJX0SU3sCuMKNTiaJHZDi1ccDUdUHIlYqs14F0Da9p2yLIel2C3TipuV28FlnBf5tatjjsWV6FiJfvex6NLWOkDC6XIBURkyTQW0/7pcl5OeTyFvmlZU+FRdcrFeTMO0MRtMGi8DfAJNNG2UycJgfIzHr/DMpnxmJwojmNKA+5rcFdmoY1hOzgQn09GFAeYoIN6R/y6FKoAIe2I/hGsktk0KDBxI1EsQgN4c+HeQ/Wk3gwigesAAsaxeNosPpoHCmA920jmI7l4mNl4lp9mLWsQfoDRawziWx8qHjACnLfloFZvM/zouTch21x+HbBElsqMb9ALgiTn9TnmSV3VViok20UrOT9CAKDUC5Xa/rl3ztJf70qGFWk2jCUaZ/GlCVbIzWh9MV1faRxXpwwaK+c+0fybvlc= gilles-perso"
+    allow-pw: false
+  storage:
+    grub:
+      reorder_uefi: false
+    config:
+# disk
+      - type: disk
+        ptable: gpt
+        id: disk-root
+        grub_device: false
+        preserve: false
+        match:
+          size: largest
+          ssd: yes
+# part /boot/efi (fat32, 512 Mo)
+      - type: partition
+        id: efi-part
+        device: disk-root
+        size: 512M
+        flag: boot
+        grub_device: true
+        preserve: false
+        wipe: superblock
+        number: 1
+      - type: format
+        id: efi-part-fs
+        fstype: fat32
+        volume: efi-part
+# part / (ext4, 8 Go)
+      - type: partition
+        id: root-part
+        device: disk-root
+        size: 8G
+        number: 2
+        preserve: false
+        wipe: superblock
+      - type: format
+        id: root-part-fs
+        fstype: ext4
+        volume: root-part
+# part /var (ext4, 20 Go)
+      - type: partition
+        id: var-log-part
+        device: disk-root
+        size: 20G
+        number: 3
+        preserve: false
+        wipe: superblock
+      - type: format
+        id: var-log-part-fs
+        fstype: ext4
+        volume: var-log-part
+# part swap (swap, 16 Go)
+      - type: partition
+        id: swap-part
+        device: disk-root
+        size: 16G
+        number: 5
+        preserve: false
+        wipe: superblock
+      - type: format
+        id: swap-part-fs
+        fstype: swap
+        volume: swap-part
+# part /var/lib (ext4, -1)
+      - type: partition
+        id: var-lib-part
+        device: disk-root
+        size: -1
+        number: 4
+        preserve: false
+        wipe: superblock
+      - type: format
+        id: var-lib-part-fs
+        fstype: ext4
+        volume: var-lib-part
+# mount points
+      - type: mount
+        id: root-part-fs-mount
+        path: /
+        device: root-part-fs
+      - type: mount
+        id: efi-part-fs-mount
+        path: /boot/efi
+        device: efi-part-fs
+      - type: mount
+        id: var-log-part-fs-mount
+        path: /var
+        device: var-log-part-fs
+      - type: mount
+        id: var-lib-part-fs-mount
+        path: /var/lib
+        device: var-lib-part-fs

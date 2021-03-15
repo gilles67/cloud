@@ -1,0 +1,52 @@
+---
+- name: "Create infra ubuntu provision server folder"
+  file:
+    path: "/opt/cloud/infra/ubuntu/files/{{ item }}"
+    state: directory
+    recurse: yes
+  loop: ["efi", "mbr"]
+
+- name: "Generate configuration file"
+  template:
+    src: "ubuntu/{{ item.0 }}/{{ item.1 }}.j2"
+    dest: "/opt/cloud/infra/ubuntu/files/{{ item.0 }}/{{ item.1 }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_nested: 
+    - ["efi", "mbr"]
+    - ["user-data", "meta-data"]
+
+- name: "Create nginx infra ubuntu container"
+  docker_container:
+    name: "infra.ubuntu"
+    state: present
+    restart_policy: unless-stopped
+    image: "nginx:{{ nginx_version }}"
+    volumes:
+      - "/opt/cloud/infra/ubuntu/files:/usr/share/nginx/html:ro"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.infra.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.ubuntu.rule: "Host(`{{ features.infra.ubuntu.hostname }}`)"
+      traefik.http.routers.ubuntu.entrypoints: "web"
+      traefik.http.routers.ubuntu.middlewares: "httpsredirect@file"
+      traefik.http.routers.ubuntu-ssl.rule: "Host(`{{ features.infra.ubuntu.hostname  }}`)"
+      traefik.http.routers.ubuntu-ssl.entrypoints: "websecure"
+      traefik.http.routers.ubuntu-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.ubuntu-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.ubuntu-ssl.tls.options: "intermediate@file"
+      traefik.http.services.ubuntu-ssl.loadbalancer.server.port: "80"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.infra.network }}"
+        ipv6_address: "{{ features.infra.ubuntu.ipv6 }}"
+
+- name: Start traefik container
+  docker_container:
+    name: "infra.ubuntu"
+    state: started

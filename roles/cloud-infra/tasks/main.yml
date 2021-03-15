@@ -1,0 +1,7 @@
+---
+- name: "Infra Ubuntu server provision server"
+  include: "infra-ubuntu.yml"
+  when:     
+    - features is defined
+    - features.infra.ubuntu is defined
+
