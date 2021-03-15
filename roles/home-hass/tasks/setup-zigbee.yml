@@ -1,0 +1,68 @@
+---
+- name: "Create Zigbee2MQTT data volume"
+  docker_volume:
+    name: "hass_broker_data"
+    state: present
+
+- name: "Create Zigbee2MQTT bind9 folder"
+  file:
+    path: "/opt/home/hass/zigbee/"
+    state: directory
+    recurse: yes
+
+- name: "Update Zigbee2MQTT configuration file"
+  yedit:
+    src: "/opt/home/hass/zigbee/configuration.yaml"
+    value:
+      homeassistant: true
+      permit_join: false
+      mqtt:
+        base_topic: "zigbee2mqtt"
+        server: "mqtt://hass.broker:1883"
+      serial:
+        port: "{{ features.hass.adapter.zigbee.device }}"
+      advanced:
+        pan_id: "{{ features.hass.adapter.zigbee.pan_id }}"
+        log_level: info
+        log_output: 
+          - console
+  register: "zigbee_configuration_stat"
+
+- name: "Create Zigbee2MQTT container"
+  docker_container:
+    name: "hass.zigbee"
+    state: present
+    restart_policy: unless-stopped
+    image: "koenkk/zigbee2mqtt:{{ zigbee2mqtt_version }}"
+    volumes:
+      - "hass_broker_data:/app/data"
+      - "/opt/home/hass/zigbee/configuration.yaml:/app/data/configuration.yaml"
+    devices:
+      - "{{ features.hass.adapter.zigbee.device }}"
+    env:
+      TZ: "{{ timezone }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.hass.network }}"
+        ipv6_address: "{{ features.hass.adapter.zigbee.ipv6  }}"
+    links:
+      - "hass.broker"
+
+- name: "Start Zigbee2MQTT container"
+  docker_container:
+    name: "hass.zigbee"
+    state: started
+  notify: reload_ufw
+
+- name: "Restart Zigbee2MQTT container"
+  docker_container:
+    name: "hass.zigbee"
+    restart: "yes"
+  notify: reload_ufw
+  when: zigbee_configuration_stat.changed
+
+- name: "Zigbee2MQTTAssistant"
+  include: "zigbee-zigbee2mqttassistant.yml"
+  when: 
+    - features.hass.adapter.zigbee.admin_ipv6
+    - features.hass.adapter.zigbee.admin_hostname
