@@ -30,6 +30,7 @@
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ current_item.network }}"
       traefik.enable: "true"
       traefik.http.routers.admindb.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
       traefik.http.routers.admindb.entrypoints: "web"
