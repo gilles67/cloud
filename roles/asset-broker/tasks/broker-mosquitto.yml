@@ -3,12 +3,28 @@
   set_fact: 
     current_item: "{{ hostvars[inventory_hostname].features[fitem] }}"
 
+- name: "Create Eclipse Mosquitto folder"
+  file:
+    path: "/opt/asset/{{ current_item.name | default(fitem) | lower }}/broker/"
+    state: directory
+    recurse: yes
+
+- name: "Create Eclipse Mosquitto configuration"
+  template:
+    src: mosquitto.conf.j2
+    dest: "/opt/asset/{{ current_item.name | default(fitem) | lower }}/broker/mosquitto.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: "Create Eclipse Mosquitto container"
   docker_container:
     name: "{{ current_item.name | default(fitem) | lower }}.broker"
     state: present
     restart_policy: unless-stopped
     image: "eclipse-mosquitto:{{ mosquitto_version }}"
+    volumes:
+      - "/opt/asset/{{ current_item.name | default(fitem) | lower }}/broker/mosquitto.conf:/mosquitto/config/mosquitto.conf"
     env:
       TZ: "{{ timezone }}"
     networks_cli_compatible: yes
