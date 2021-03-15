@@ -5,13 +5,14 @@ autoinstall:
     layout: fr
   identity:
     hostname: ubuntu-server
-    password: "$6$fGNfR9MHChdkWw6g$V5aVmzb9aYJQK7bsjGCiCZVeaHMqmUpLCDw8Fs5eXb6uRErivy2DuCN7iIpbYPYqgGF81P.sBltvrStXaOrp0."
-    username: ansible
+    password: "{{ features.infra.ubuntu.initial.password }}"
+    username: {{ features.infra.ubuntu.initial.username }}
   ssh:
     install-server: true
     authorized-keys:
-      - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDAkSxpkueI6lJpDPeV/vAGo79aS+n8BgD8B4cc6lZOSKyKL3nK+HFwI8uYqi86HotlKEGPPb2iW5z7VwHA9tFoFpKLB4bs8+gui/BSR8r10m8jWA8omwJUbFRLLM8Fx5FtBYh/UlNNmk3vzKO10eMn/upl28sEGF04IqaYCOvIarFPp/xWtos9n8ww3fdrKttEyfoiZ3cf5m5KSdBhkFHTQ6iJhqM55pBB+oosqKwzubOdQxSQ5K9OODIT4GWycfNK/J5yJptMjjJp2BrCenRmoL3P+pr6Muk0YFrW2ziNivemNbobyadSnwFPuD12oq3Q8vqOgjVPOxEJ+0ZFc+/oDbaKlvABoYE8iFjhoGgXTG4ZSqByhVZf1NxiT8DPvezyWfiCnltYy0XD1QBrzHAI1K5OY2OovemCrqthWEiQAZ2lP5/J30NHUBS88xvmYv6h+tig1zIpN5v1v1TXsMU9guw8YCTQidU+7yW8iiyTApty3MZT8q/PZ+rLywKwtny3pXrWreZic7kinIuX9iuw328brOih5NmkBW+RNQCo2Y13z4SsJhY/Gf7O8DZl59QOf0JjCHC/H7D67UW0Pl50tsDTjG6SoK51rHj+WfIBhfYO5VzMnGc05j2YxYPoXVQxKG9ponCN7cRqeyel9A1LLKM55+hcoohrzPlyZ6GFvw== ansible@FENRIS"
-      - "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAgEAtpru9JmmqFb+9Yd3vg9aRWKIcOtEZ9/ao85TU74AqqDCQYAXJJfmlcKc03NEPw51SuLzRryjV/nXHHmgLkHb7WwMe6e0VS0hZFnML/GCwt/TsDxAplWfcoKZdIjI5mDaCFfDza5L4B4E4YnR99SfPcBZyjtxBaRoz5JCkVjgYYbsozrcz0ESlyDIUMwRiXca7io5vgKQq3xIkFiyhNxP0k96Tg5SxdSS37cEPNumB9YM9E6XQjM3pQJ1j4FveLoOERhra2VoHLvkRLJX0SU3sCuMKNTiaJHZDi1ccDUdUHIlYqs14F0Da9p2yLIel2C3TipuV28FlnBf5tatjjsWV6FiJfvex6NLWOkDC6XIBURkyTQW0/7pcl5OeTyFvmlZU+FRdcrFeTMO0MRtMGi8DfAJNNG2UycJgfIzHr/DMpnxmJwojmNKA+5rcFdmoY1hOzgQn09GFAeYoIN6R/y6FKoAIe2I/hGsktk0KDBxI1EsQgN4c+HeQ/Wk3gwigesAAsaxeNosPpoHCmA920jmI7l4mNl4lp9mLWsQfoDRawziWx8qHjACnLfloFZvM/zouTch21x+HbBElsqMb9ALgiTn9TnmSV3VViok20UrOT9CAKDUC5Xa/rl3ztJf70qGFWk2jCUaZ/GlCVbIzWh9MV1faRxXpwwaK+c+0fybvlc= gilles-perso"
+    {% for sshkey in features.infra.ubuntu.initial.keys %}
+      - "{{ sshkey }}"
+    {% endfor %}
     allow-pw: false
   storage:
     grub:
