@@ -16,6 +16,8 @@ entryPoint = "web"
 
 [providers.docker]
 exposedbydefault = false
+network = {{ current_item.network }}
+constraints = "Label(`docker.network`, `{{ current_item.network }}`)"
 
 [providers.file]
 filename = "/etc/traefik/dynamic.toml"

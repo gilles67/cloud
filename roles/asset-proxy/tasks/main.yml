@@ -1,5 +1,5 @@
 ---
-- name: "Install brocker"
+- name: "Install proxy"
   include: "{{ hostvars[inventory_hostname].features[fitem].proxy.vendor }}-proxy.yml"
   loop: "{{ features.keys() | list }}"
   loop_control:
