@@ -24,3 +24,12 @@
     - ["tcp", "udp"]
     - "{{ docker.network.bridge }}"
 
+# - name: Firewall allow inter container communication
+#   ufw:
+#     rule: allow
+#     route: yes
+#     src: "{{ item.ipv6  }}"
+#     dest: "{{ item.ipv6  }}"
+#     if: "{{ item.br }}"
+#     proto: "any"
+#   loop: "{{ docker.network.bridge }}"

@@ -5,6 +5,6 @@
         "dns-search": ["{{ docker.network.search | join('", "') }}"],
         "bip": "169.254.0.1/28",
         "default-address-pools": [ { "base": "169.254.0.0/24", "size": 28 } ],
-        "iptables": false,
+        "iptables": true,
         "selinux-enabled": true
 }
