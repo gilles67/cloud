@@ -6,6 +6,10 @@
     recurse: yes
   loop: ["efi", "mbr"]
 
+- name: "Ubuntu Initials"
+  debug: 
+    var: features.infra.ubuntu.initial.ssh_keys
+
 - name: "Generate configuration file"
   template:
     src: "ubuntu/{{ item.0 }}/{{ item.1 }}.j2"

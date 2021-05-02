@@ -10,7 +10,7 @@ autoinstall:
   ssh:
     install-server: true
     authorized-keys:
-    {% for sshkey in features.infra.ubuntu.initial.keys %}
+    {% for sshkey in features.infra.ubuntu.initial.ssh_keys %}
       - "{{ sshkey }}"
     {% endfor %}
   storage:
