@@ -8,9 +8,11 @@ Table = {{ wgitem.table }}
 PostUp = /bin/ip -6 rule add fwmark 242 table {{ wgitem.table }}
 PostDown = /bin/ip -6 rule del fwmark 242 table {{ wgitem.table }}
 PostUp = /sbin/ip6tables -t mangle -A PREROUTING -i docker0 -j MARK --set-mark 242
+{% if docker.network.bridge is defined %}
 {% for bridge in docker.network.bridge %}
 PostUp = /sbin/ip6tables -t mangle -A PREROUTING -i {{ bridge.br }} -j MARK --set-mark 242
 {% endfor %}
+{% endif %}
 PostDown = /sbin/ip6tables -t mangle -F
 {% endif %}
 {% endif %}
