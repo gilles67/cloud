@@ -38,10 +38,6 @@
       traefik.http.routers.admindb-ssl.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
       traefik.http.routers.admindb-ssl.entrypoints: "websecure"
       traefik.http.routers.admindb-ssl.middlewares: "hsts@file,httpsredirect@file"
-#      traefik.http.routers.admindb-ssl.middlewares: "header-admindb,auth-admindb,hsts@file,httpsredirect@file"
-#      traefik.http.middlewares.auth-admindb.forwardauth.address: "https://{{ current_item.database.admin_authforward }}/forward/auth"
-#      traefik.http.middlewares.auth-admindb.forwardauth.trustForwardHeader: "true"
-#      traefik.http.middlewares.header-admindb.headers.customrequestheaders.X-Auth-Service: "{{ current_item.database.admin_hostname }}"
       traefik.http.routers.admindb-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.admindb-ssl.tls.options: "intermediate@file"
       traefik.http.services.admindb-ssl.loadbalancer.server.port: "80"
@@ -52,6 +48,41 @@
       - "{{ current_item.name | default(fitem) | lower }}.mariadb"
   when:
     - current_item.database.admin_hostname is defined
+    - not current_item.auth is defined
+
+
+- name: Create phpmyadmin container
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.mariadb.pma"
+    state: present
+    restart_policy: unless-stopped
+    image: "phpmyadmin:{{ phpmyadmin_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      PMA_HOST: "{{ current_item.name | default(fitem) | lower }}.mariadb"
+      MYSQL_ROOT_PASSWORD: "{{ current_item.database.root_password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ current_item.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.admindb.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
+      traefik.http.routers.admindb.entrypoints: "web"
+      traefik.http.routers.admindb.middlewares: "httpsredirect@file"
+      traefik.http.routers.admindb-ssl.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
+      traefik.http.routers.admindb-ssl.entrypoints: "websecure"
+      traefik.http.routers.admindb-ssl.middlewares: "hsts@file,httpsredirect@file,fwauthmid"
+      traefik.http.routers.admindb-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.admindb-ssl.tls.options: "intermediate@file"
+      traefik.http.services.admindb-ssl.loadbalancer.server.port: "80"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+    links:
+      - "{{ current_item.name | default(fitem) | lower }}.mariadb"
+  when:
+    - current_item.database.admin_hostname is defined
+    - current_item.auth is defined
 
 - name: Start mariadb container
   docker_container:
