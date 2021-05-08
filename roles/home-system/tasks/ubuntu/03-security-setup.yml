@@ -11,7 +11,8 @@
 - name: Firewall allow OpenSSH
   ufw:
     rule: allow
-    name: OpenSSH
+    proto: "tcp"
+    port: "22"
 
 - name: Firewall activation
   ufw:
