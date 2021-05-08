@@ -9,3 +9,4 @@
     driver_options:
       com.docker.network.bridge.name: "{{ item.br }}"
   loop: "{{ docker.network.bridge }}"
+  when: "docker.network.bridge is defined"

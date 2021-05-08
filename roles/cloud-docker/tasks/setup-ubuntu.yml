@@ -12,6 +12,14 @@
   when: 
     - ansible_architecture == "x86_64"
 
+- name: Install Docker repository
+  apt_repository:
+    repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release | lower }} stable"
+    state: present
+  when: 
+    - ansible_architecture == "aarch64"
+
+
 # Install docker packages
 - name: Install Docker packages
   apt:

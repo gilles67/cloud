@@ -23,6 +23,7 @@
     - "{{ docker.network.dns }}"
     - ["tcp", "udp"]
     - "{{ docker.network.bridge }}"
+  when: "docker.network.bridge is defined"
 
 # - name: Firewall allow inter container communication
 #   ufw:
