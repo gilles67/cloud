@@ -1,0 +1,12 @@
+---
+- name: "Firewall auth forward outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ current_item.auth.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"

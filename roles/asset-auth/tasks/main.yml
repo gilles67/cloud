@@ -1,0 +1,9 @@
+---
+- name: "Install forward auth service"
+  include: "{{ hostvars[inventory_hostname].features[fitem].auth.vendor }}-auth.yml"
+  loop: "{{ features.keys() | list }}"
+  loop_control:
+    loop_var: "fitem"
+  when: 
+    - hostvars[inventory_hostname].features[fitem].auth is defined
+    - hostvars[inventory_hostname].features[fitem].auth.vendor is defined

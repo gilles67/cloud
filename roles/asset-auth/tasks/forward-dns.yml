@@ -1,0 +1,17 @@
+---
+- name: "Add dns record for admin domain"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "CNAME"
+    record: "{{ current_item.auth.hostname }}."
+    value: "{{ current_item.proxy.admin_hostname }}."
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - current_item.proxy.admin_hostname is defined
+    - current_item.auth.hostname is defined

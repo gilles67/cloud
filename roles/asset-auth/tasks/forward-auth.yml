@@ -1,0 +1,100 @@
+---
+- name: "Define current scope values"
+  set_fact: 
+    current_item: "{{ hostvars[inventory_hostname].features[fitem] }}"
+
+- name: "Feature item values"
+  debug: 
+    var: current_item
+
+- include: "forward-dns.yml"
+
+- include: "forward-firewall.yml"
+
+- name: Create forward auth container
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.auth"
+    state: present
+    restart_policy: unless-stopped
+    image: "thomseddon/traefik-forward-auth:{{ forward_version }}-arm64"
+    env:
+      TZ: "{{ timezone }}"
+      DEFAULT_PROVIDER: "{{ current_item.auth.provider.vendor }}"
+      PROVIDERS_OIDC_ISSUER_URL: "{{ current_item.auth.provider.oidc_url }}"
+      PROVIDERS_OIDC_CLIENT_ID: "{{ current_item.auth.provider.oidc_id }}"
+      PROVIDERS_OIDC_CLIENT_SECRET: "{{ current_item.auth.provider.oidc_secret }}"
+      SECRET: "{{ current_item.auth.secret }}"
+      AUTH_HOST: "{{ current_item.auth.hostname }}"
+      COOKIE_DOMAIN: "{{ current_item.auth.domain }}"
+      LOG_LEVEL: "debug"
+      LOG_FORMAT: "pretty"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ current_item.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.fwauth.rule: "Host(`{{ current_item.auth.hostname }}`)"
+      traefik.http.routers.fwauth.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.fwauth.entrypoints: "web"
+      traefik.http.routers.fwauthssl.rule: "Host(`{{ current_item.auth.hostname }}`)"
+      traefik.http.routers.fwauthssl.middlewares: "hsts@file,httpsredirect@file,fwauthmid"
+      traefik.http.routers.fwauthssl.entrypoints: "websecure"
+      traefik.http.routers.fwauthssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.fwauthssl.tls.options: "intermediate@file"
+      traefik.http.services.fwauthssl.loadbalancer.server.port: "4181"
+      traefik.http.middlewares.fwauthmid.forwardauth.address: "http://{{ current_item.name | default(fitem) | lower }}.auth:4181"
+      traefik.http.middlewares.fwauthmid.forwardauth.authResponseHeaders: "X-Forwarded-User"
+
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+        ipv6_address: "{{ current_item.auth.ipv6 }}"
+  when: 
+    - ansible_architecture == "aarch64"
+
+- name: Create forward auth container
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.auth"
+    state: present
+    restart_policy: unless-stopped
+    image: "thomseddon/traefik-forward-auth:{{ forward_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      DEFAULT_PROVIDER: "{{ current_item.auth.provider.vendor }}"
+      PROVIDERS_OIDC_ISSUER_URL: "{{ current_item.auth.provider.oidc_url }}"
+      PROVIDERS_OIDC_CLIENT_ID: "{{ current_item.auth.provider.oidc_id }}"
+      PROVIDERS_OIDC_CLIENT_SECRET: "{{ current_item.auth.provider.oidc_secret }}"
+      SECRET: "{{ current_item.auth.secret }}"
+      AUTH_HOST: "{{ current_item.auth.hostname }}"
+      COOKIE_DOMAIN: "{{ current_item.auth.domain }}"
+      LOG_LEVEL: "debug"
+      LOG_FORMAT: "pretty"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ current_item.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.fwauth.rule: "Host(`{{ current_item.auth.hostname }}`)"
+      traefik.http.routers.fwauth.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.fwauth.entrypoints: "web"
+      traefik.http.routers.fwauthssl.rule: "Host(`{{ current_item.auth.hostname }}`)"
+      traefik.http.routers.fwauthssl.middlewares: "hsts@file,httpsredirect@file,fwauthmid"
+      traefik.http.routers.fwauthssl.entrypoints: "websecure"
+      traefik.http.routers.fwauthssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.fwauthssl.tls.options: "intermediate@file"
+      traefik.http.services.fwauthssl.loadbalancer.server.port: "4181"
+      traefik.http.middlewares.fwauthmid.forwardauth.address: "http://{{ current_item.name | default(fitem) | lower }}.auth:4181"
+      traefik.http.middlewares.fwauthmid.forwardauth.authResponseHeaders: "X-Forwarded-User"
+
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+        ipv6_address: "{{ current_item.auth.ipv6 }}"
+  when: 
+    - ansible_architecture == "x86_64"
+
+- name: Start forward auth container
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.auth"
+    state: started
+
