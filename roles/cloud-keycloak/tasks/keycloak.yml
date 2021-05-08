@@ -1,0 +1,42 @@
+---
+- name: Create Keycloak container
+  docker_container:
+    name: "{{ features.keycloak.name }}"
+    state: present
+    restart_policy: unless-stopped
+    image: "jboss/keycloak:{{ keycloak_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      DB_VENDOR: "{{ features.keycloak.database.vendor }}"
+      DB_ADDR: "{{ features.keycloak.name }}.{{ features.keycloak.database.vendor }}"
+      DB_USER: "{{ features.keycloak.name }}"
+      DB_DATABASE: "{{ features.keycloak.name }}"
+      DB_PASSWORD: "{{ features.keycloak.database.user_password  }}"
+      PROXY_ADDRESS_FORWARDING: "true"
+      KEYCLOAK_USER: "admin"
+      KEYCLOAK_PASSWORD: "{{ features.keycloak.admin_password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.keycloak.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.keycloak.rule: "Host(`{{ features.keycloak.hostname }}`)"
+      traefik.http.routers.keycloak.entrypoints: "web"
+      traefik.http.routers.keycloak.middlewares: "httpsredirect@file"
+      traefik.http.routers.keycloak-ssl.rule: "Host(`{{ features.keycloak.hostname  }}`)"
+      traefik.http.routers.keycloak-ssl.entrypoints: "websecure"
+      traefik.http.routers.keycloak-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.keycloak-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.keycloak-ssl.tls.options: "intermediate@file"
+      traefik.http.services.keycloak-ssl.loadbalancer.server.port: "8080"
+    command:
+      - "-Djboss.bind.address.private=127.0.0.1 -Djboss.bind.address=0.0.0.0"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.keycloak.network }}"
+        ipv6_address: "{{ features.keycloak.ipv6 }}"
+
+- name: Start Keycloak container
+  docker_container:
+    name: "{{ features.keycloak.name }}"
+    state: started

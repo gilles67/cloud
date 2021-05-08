@@ -1,26 +1,6 @@
 ---
-- name: Create Keycloak container
-  docker_container:
-    name: ""
-    state: present
-    restart_policy: unless-stopped
-    image: "keycloak:{{ keycloak_version }}"
-    volumes:
-      - "{{ current_item.database.name }}_database_data:/var/lib/mysql"
-    env:
-      TZ: "{{ timezone }}"
-      MYSQL_ROOT_PASSWORD: "{{ current_item.database.root_password }}"
-      MYSQL_DATABASE: "{{ current_item.database.name }}"
-      MYSQL_USER: "{{ current_item.database.name }}"
-      MYSQL_PASSWORD: "{{ current_item.database.user_password }}"
-    labels:
-      one.h42.nhfw.enable: "true"
-      one.h42.nhfw.dns.register: "true"
-    purge_networks: true
-    networks:
-      - name: "{{ current_item.network }}"
-
-- name: Start Keycloak container
-  docker_container:
-    name: "db.{{ current_item.database.name }}"
-    state: started
+- name: "Keycloak IDP server"
+  include: "keycloak.yml"
+  when:     
+    - features is defined
+    - features.keycloak is defined
