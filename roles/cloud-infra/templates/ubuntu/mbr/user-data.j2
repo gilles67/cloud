@@ -1,3 +1,4 @@
+---
 #cloud-config
 autoinstall:
   version: 1
@@ -10,9 +11,9 @@ autoinstall:
   ssh:
     install-server: true
     authorized-keys:
-    {% for sshkey in features.infra.ubuntu.initial.ssh_keys %}
+{% for sshkey in features.infra.ubuntu.initial.ssh_keys %}
       - "{{ sshkey }}"
-    {% endfor %}
+{% endfor %}
   storage:
     grub:
       reorder_uefi: false
