@@ -1,4 +1,4 @@
-
+---
 - name: "Add dns record for Homeassitant"
   nsupdate:
     key_name: "tsig-{{ nsupdate.zone }}"
@@ -15,6 +15,38 @@
     - nsupdate.server is defined
     - features.hass.proxy.admin_hostname is defined
     - features.hass.adapter.zigbee.admin_hostname is defined
+
+# - name: "Create Zigbee2MQTTAssistant container"
+#   docker_container:
+#     name: "hass.zigbeeassist"
+#     state: present
+#     restart_policy: unless-stopped
+#     image: "carldebilly/zigbee2mqttassistant:{{ zigbee2mqttassistant_version }}"
+#     env:
+#       TZ: "{{ timezone }}"
+#       Z2MA_SETTINGS__MQTTSERVER: "hass.broker"
+#     labels:
+#       one.h42.nhfw.enable: "true"
+#       one.h42.nhfw.dns.register: "true"
+#       docker.network: "{{ features.hass.network }}"
+#       traefik.enable: "true"
+#       traefik.http.routers.zigbee.rule: "Host(`{{ features.hass.adapter.zigbee.admin_hostname }}`)"
+#       traefik.http.routers.zigbee.entrypoints: "web"
+#       traefik.http.routers.zigbee.middlewares: "httpsredirect@file"
+#       traefik.http.routers.zigbee-ssl.rule: "Host(`{{ features.hass.adapter.zigbee.admin_hostname }}`)"
+#       traefik.http.routers.zigbee-ssl.entrypoints: "websecure"
+#       traefik.http.routers.zigbee-ssl.middlewares: "hsts@file,httpsredirect@file"
+#       traefik.http.routers.zigbee-ssl.tls.certresolver: "letsencrypt"
+#       traefik.http.routers.zigbee-ssl.tls.options: "intermediate@file"
+#       traefik.http.services.zigbee-ssl.loadbalancer.server.port: "80"
+#     networks_cli_compatible: yes
+#     networks:
+#       - name: "{{ features.hass.network }}"
+#         ipv6_address: "{{ features.hass.adapter.zigbee.admin_ipv6 }}"
+#     links:
+#       - "hass.broker"
+#   when:
+#   - not current_item.auth is defined
 
 - name: "Create Zigbee2MQTTAssistant container"
   docker_container:
@@ -35,11 +67,7 @@
       traefik.http.routers.zigbee.middlewares: "httpsredirect@file"
       traefik.http.routers.zigbee-ssl.rule: "Host(`{{ features.hass.adapter.zigbee.admin_hostname }}`)"
       traefik.http.routers.zigbee-ssl.entrypoints: "websecure"
-      traefik.http.routers.zigbee-ssl.middlewares: "hsts@file,httpsredirect@file"
-#      traefik.http.routers.zigbee-ssl.middlewares: "header-zigbee,auth-zigbee,hsts@file,httpsredirect@file"
-#      traefik.http.middlewares.auth-zigbee.forwardauth.address: "https://{{ current_item.database.admin_authforward }}/forward/auth"
-#      traefik.http.middlewares.auth-zigbee.forwardauth.trustForwardHeader: "true"
-#      traefik.http.middlewares.header-zigbee.headers.customrequestheaders.X-Auth-Service: "{{ current_item.database.admin_hostname }}"
+      traefik.http.routers.zigbee-ssl.middlewares: "hsts@file,httpsredirect@file,fwauthmid"
       traefik.http.routers.zigbee-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.zigbee-ssl.tls.options: "intermediate@file"
       traefik.http.services.zigbee-ssl.loadbalancer.server.port: "80"
@@ -49,9 +77,10 @@
         ipv6_address: "{{ features.hass.adapter.zigbee.admin_ipv6 }}"
     links:
       - "hass.broker"
+  when:
+    - current_item.auth is defined
 
 - name: "Start Zigbee2MQTTAssistant container"
   docker_container:
     name: "hass.zigbeeassist"
     state: started
-  notify: reload_ufw

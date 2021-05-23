@@ -9,6 +9,12 @@
     name: "hass_data"
     state: present
 
+- name: "Create HomeAssistant folder"
+  file:
+    path: "/opt/home/hass/homeassistant/"
+    state: directory
+    recurse: yes
+
 - name: "Add dns record for Homeassitant"
   nsupdate:
     key_name: "tsig-{{ nsupdate.zone }}"
@@ -32,6 +38,9 @@
     state: present
     restart_policy: unless-stopped
     image: "homeassistant/home-assistant:{{ homeassistant_version }}"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/opt/home/hass/homeassistant:/config"
     env:
       TZ: "{{ timezone }}"
     labels:
@@ -45,10 +54,6 @@
       traefik.http.routers.hass-ssl.rule: "Host(`{{ features.hass.hostname }}`)"
       traefik.http.routers.hass-ssl.entrypoints: "websecure"
       traefik.http.routers.hass-ssl.middlewares: "hsts@file,httpsredirect@file"
-#      traefik.http.routers.hass-ssl.middlewares: "header-hass,auth-hass,hsts@file,httpsredirect@file"
-#      traefik.http.middlewares.auth-hass.forwardauth.address: "https://{{ current_item.database.admin_authforward }}/forward/auth"
-#      traefik.http.middlewares.auth-hass.forwardauth.trustForwardHeader: "true"
-#      traefik.http.middlewares.header-hass.headers.customrequestheaders.X-Auth-Service: "{{ current_item.database.admin_hostname }}"
       traefik.http.routers.hass-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.hass-ssl.tls.options: "intermediate@file"
       traefik.http.services.hass-ssl.loadbalancer.server.port: "8123"
@@ -76,4 +81,3 @@
   docker_container:
     name: "hass"
     state: started
-  notify: reload_ufw

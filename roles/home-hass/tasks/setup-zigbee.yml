@@ -4,29 +4,11 @@
     name: "hass_broker_data"
     state: present
 
-- name: "Create Zigbee2MQTT bind9 folder"
+- name: "Create Zigbee2MQTT folder"
   file:
     path: "/opt/home/hass/zigbee/"
     state: directory
     recurse: yes
-
-- name: "Update Zigbee2MQTT configuration file"
-  yedit:
-    src: "/opt/home/hass/zigbee/configuration.yaml"
-    value:
-      homeassistant: true
-      permit_join: false
-      mqtt:
-        base_topic: "zigbee2mqtt"
-        server: "mqtt://hass.broker:1883"
-      serial:
-        port: "{{ features.hass.adapter.zigbee.device }}"
-      advanced:
-        pan_id: "{{ features.hass.adapter.zigbee.pan_id }}"
-        log_level: info
-        log_output: 
-          - console
-  register: "zigbee_configuration_stat"
 
 - name: "Create Zigbee2MQTT container"
   docker_container:
@@ -52,14 +34,6 @@
   docker_container:
     name: "hass.zigbee"
     state: started
-  notify: reload_ufw
-
-- name: "Restart Zigbee2MQTT container"
-  docker_container:
-    name: "hass.zigbee"
-    restart: "yes"
-  notify: reload_ufw
-  when: zigbee_configuration_stat.changed
 
 - name: "Zigbee2MQTTAssistant"
   include: "zigbee-zigbee2mqttassistant.yml"
