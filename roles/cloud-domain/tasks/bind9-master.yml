@@ -53,6 +53,7 @@
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.domain.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ features.domain.network }}"

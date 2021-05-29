@@ -26,7 +26,7 @@
 - name: "Firewall bind9 recursive"
   include: "bind9-recursive-firewall.yml"
 
-- name: Create domain bind9 container
+- name: Create domain recursive bind9 container
   docker_container:
     name: "domain.recursive"
     state: present
@@ -41,13 +41,14 @@
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.domain.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ features.domain.network }}"
         ipv6_address: "{{ features.domain.recursive.ipv6 }}"
         ipv4_address: "{{ features.domain.recursive.ipv4 }}"
 
-- name: Start domain bind9 container
+- name: Start domain recursive bind9 container
   docker_container:
     name: "domain.recursive"
     state: started
