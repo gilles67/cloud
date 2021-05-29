@@ -1,0 +1,58 @@
+---
+- name: "Add dns record Chronograf"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "CNAME"
+    record: "{{ features.tick.chronograf.hostname }}."
+    value: "{{ features.tick.proxy.admin_hostname }}."
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.tick.chronograf.hostname is defined
+    - features.tick.proxy.admin_hostname is defined
+
+- name: "Create Chronograf data volume"
+  docker_volume:
+    name: "tick_chronograf_data"
+    state: present
+
+- name: "Create Chronograf container"
+  docker_container:
+    name: "tick.chronograf"
+    state: present
+    restart_policy: unless-stopped
+    image: "chronograf:{{ chronograf_version }}"
+    volumes:
+      - "tick_chronograf_data:/var/lib/chronograf"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.tick.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.chronograf.rule: "Host(`{{ features.tick.chronograf.hostname }}`)"
+      traefik.http.routers.chronograf.entrypoints: "web"
+      traefik.http.routers.chronograf.middlewares: "httpsredirect@file"
+      traefik.http.routers.chronograf-ssl.rule: "Host(`{{ features.tick.chronograf.hostname  }}`)"
+      traefik.http.routers.chronograf-ssl.entrypoints: "websecure"
+      traefik.http.routers.chronograf-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.chronograf-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.chronograf-ssl.tls.options: "intermediate@file"
+      traefik.http.services.chronograf-ssl.loadbalancer.server.port: "8888"
+    command:
+      - "--influxdb-url=http://{{ features.tick.influxdb.username }}:{{ features.tick.influxdb.password }}@influxdb.tick:8086"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.tick.network }}"
+        ipv6_address: "{{ features.tick.chronograf.ipv6 }}"
+
+- name: "Start Chronograf container"
+  docker_container:
+    name: "tick.chronograf"
+    state: started

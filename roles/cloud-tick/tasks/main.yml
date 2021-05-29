@@ -1,0 +1,21 @@
+---
+- name: "Setup Influxdb"
+  include: "tick-influxdb.yml"
+  when:     
+    - features is defined
+    - features.tick is defined
+    - features.tick.influxdb is defined
+
+# - name: "Setup Kapacitor"
+#   include: "tick-kapacitor.yml"
+#   when:     
+#     - features is defined
+#     - features.tick is defined
+#     - features.tick.kapacitor is defined
+
+# - name: "Setup Chronograf"
+#   include: "tick-chronograf.yml"
+#   when:     
+#     - features is defined
+#     - features.tick is defined
+#     - features.tick.chronograf is defined

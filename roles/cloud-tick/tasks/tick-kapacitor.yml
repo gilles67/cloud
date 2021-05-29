@@ -1,0 +1,44 @@
+---
+- name: "Create Kapacitor configuration folder"
+  file:
+    path: "/opt/cloud/tick/kapacitor/config"
+    state: directory
+    recurse: yes
+
+- name: "Generate Kapacitor configuration file"
+  template:
+    src: "kapacitor.conf.j2"
+    dest: "/opt/cloud/tick/kapacitor/config/kapacitor.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Create Kapacitor data volume"
+  docker_volume:
+    name: "tick_kapacitor_data"
+    state: present
+
+- name: "Create Kapacitor container"
+  docker_container:
+    name: "tick.kapacitor"
+    state: present
+    restart_policy: unless-stopped
+    image: "kapacitor:{{ kapacitor_version }}"
+    volumes:
+      - "tick_kapacitor_data:/var/lib/kapacitor"
+      - "/opt/cloud/tick/kapacitor/config/kapacitor.conf:/etc/kapacitor/kapacitor.conf:ro"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.tick.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.tick.network }}"
+        ipv6_address: "{{ features.tick.kapacitor.ipv6 }}"
+
+- name: "Start Kapacitor container"
+  docker_container:
+    name: "tick.kapacitor"
+    state: started

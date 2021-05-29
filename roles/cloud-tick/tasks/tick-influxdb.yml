@@ -1,0 +1,69 @@
+---
+- name: "Add dns record Influxdb"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "CNAME"
+    record: "{{ features.tick.influxdb.hostname }}."
+    value: "{{ features.tick.proxy.admin_hostname }}."
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.tick.influxdb.hostname is defined
+    - features.tick.proxy.admin_hostname is defined
+
+- name: "Create Influxdb configuration folder"
+  file:
+    path: "/opt/cloud/tick/influxdb/config"
+    state: directory
+    recurse: yes
+
+- name: "Create Influxdb data volume"
+  docker_volume:
+    name: "tick_influxdb_data"
+    state: present
+
+- name: "Create Influxdb container"
+  docker_container:
+    name: "tick.influxdb"
+    state: present
+    restart_policy: unless-stopped
+    image: "influxdb:{{ influxdb_version }}"
+    volumes:
+      - "tick_influxdb_data:/var/lib/influxdb2"
+      - "/opt/cloud/tick/influxdb/config:/etc/influxdb2"
+    env:
+      TZ: "{{ timezone }}"
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "{{ features.tick.influxdb.username }}"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "{{ features.tick.influxdb.password }}"
+      DOCKER_INFLUXDB_INIT_ORG: "{{ features.tick.influxdb.organization }}"
+      DOCKER_INFLUXDB_INIT_BUCKET: "{{ features.tick.influxdb.bucket }}"
+      DOCKER_INFLUXDB_INIT_RETENTION: "{{ features.tick.influxdb.retention }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.tick.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.influxdb.rule: "Host(`{{ features.tick.influxdb.hostname }}`)"
+      traefik.http.routers.influxdb.entrypoints: "web"
+      traefik.http.routers.influxdb.middlewares: "httpsredirect@file"
+      traefik.http.routers.influxdb-ssl.rule: "Host(`{{ features.tick.influxdb.hostname  }}`)"
+      traefik.http.routers.influxdb-ssl.entrypoints: "websecure"
+      traefik.http.routers.influxdb-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.influxdb-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.influxdb-ssl.tls.options: "intermediate@file"
+      traefik.http.services.influxdb-ssl.loadbalancer.server.port: "8086"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.tick.network }}"
+        ipv6_address: "{{ features.tick.influxdb.ipv6 }}"
+
+- name: "Start Influxdb container"
+  docker_container:
+    name: "tick.influxdb"
+    state: started
