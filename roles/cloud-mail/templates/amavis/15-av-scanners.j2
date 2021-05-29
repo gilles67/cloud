@@ -1,0 +1,23 @@
+use strict;
+
+## AV Scanners
+
+@av_scanners = (
+
+  ### http://www.clamav.net/   - backs up clamd or Mail::ClamAV
+  ['ClamAV-clamscan', 'clamscan',
+    "--stdout --no-summary -r --tempdir=$TEMPBASE {}",
+    [0], qr/:.*\sFOUND$/m, qr/^.*?: (?!Infected Archive)(.*) FOUND$/m ],
+
+);
+
+@av_scanners_backup = (
+
+  ### http://www.clamav.net/   - backs up clamd or Mail::ClamAV
+  ['ClamAV-clamscan', 'clamscan',
+    "--stdout --no-summary -r --tempdir=$TEMPBASE {}",
+    [0], qr/:.*\sFOUND$/m, qr/^.*?: (?!Infected Archive)(.*) FOUND$/m ],
+
+);
+
+1;  # ensure a defined return

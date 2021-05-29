@@ -1,0 +1,42 @@
+---
+- name: "Create Postfixadmin container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.postfixadmin"
+    state: present
+    restart_policy: unless-stopped
+    image: "postfixadmin:{{ postfixadmin_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      POSTFIXADMIN_DB_TYPE: "mysqli"
+      POSTFIXADMIN_DB_HOST: "{{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }}"
+      POSTFIXADMIN_DB_USER: "{{ features.mail.name | default('mail') | lower }}"
+      POSTFIXADMIN_DB_PASSWORD: "{{ features.mail.database.user_password }}"
+      POSTFIXADMIN_DB_NAME: "{{ features.mail.name | default('mail') | lower }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.mail.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.postfixadmin.rule: "Host(`{{ features.mail.postfixadmin.hostname }}`)"
+      traefik.http.routers.postfixadmin.entrypoints: "web"
+      traefik.http.routers.postfixadmin.middlewares: "httpsredirect@file"
+      traefik.http.routers.postfixadmin-ssl.rule: "Host(`{{ features.mail.postfixadmin.hostname }}`)"
+      traefik.http.routers.postfixadmin-ssl.entrypoints: "websecure"
+      traefik.http.routers.postfixadmin-ssl.middlewares: "hsts@file,httpsredirect@file,fwauthmid"
+      traefik.http.routers.postfixadmin-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.postfixadmin-ssl.tls.options: "intermediate@file"
+      traefik.http.services.postfixadmin-ssl.loadbalancer.server.port: "80"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.mail.network }}"
+        ipv6_address: "{{ features.mail.postfixadmin.ipv6 }}"
+        links:
+          - "{{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }}"
+  when:
+    - features.mail.auth is defined
+    - features.mail.database is defined
+
+- name: "Start Postfixadmin container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.postfixadmin"
+    state: started

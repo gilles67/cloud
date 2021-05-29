@@ -1,0 +1,70 @@
+##
+## Mailbox locations and namespaces
+##
+
+#
+#   %u - username
+#   %n - user part in user@domain, same as %u if there's no domain
+#   %d - domain part in user@domain, empty if there's no domain
+#   %h - home directory
+#
+
+mail_location = maildir:/var/mail/vmail/%d/%u
+
+namespace inbox {
+  # Namespace type: private, shared or public
+  #type = private
+  #separator =
+  #prefix =
+  #location =
+  inbox = yes
+  #hidden = no
+  #list = yes
+  #subscriptions = yes
+}
+
+# Should shared INBOX be visible as "shared/user" or "shared/user/INBOX"?
+#mail_shared_explicit_inbox = no
+
+mail_uid = vmail
+mail_gid = mail
+
+mail_privileged_group = mail
+#mail_access_groups =
+#mail_full_filesystem_access = no
+#mail_attribute_dict =
+#mail_server_comment = ""
+#mail_server_admin =
+
+##
+## Mail processes
+##
+
+#mmap_disable = no
+#dotlock_use_excl = yes
+#mail_fsync = optimized
+#lock_method = fcntl
+#mail_temp_dir = /tmp
+
+first_valid_uid = 10000
+last_valid_uid = 10000
+
+first_valid_gid = 8
+last_valid_gid = 8
+
+#mail_max_keyword_length = 50
+#valid_chroot_dirs =
+#mail_chroot =
+#auth_socket_path = /var/run/dovecot/auth-userdb
+#mail_plugin_dir = /usr/lib/dovecot/modules
+#mail_plugins =
+
+##
+## Maildir-specific settings
+##
+
+#maildir_stat_dirs = no
+#maildir_copy_with_hardlinks = yes
+#maildir_very_dirty_syncs = no
+#maildir_broken_filename_sizes = no
+#maildir_empty_new = no

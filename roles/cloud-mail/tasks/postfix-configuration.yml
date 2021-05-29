@@ -1,0 +1,49 @@
+---
+- name: Create postfix configuration folders
+  file:
+    path: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/postfix/{{ dir_config }}"
+    state: directory
+    recurse: yes
+  loop:
+    - "mysql"
+    - "dynamicmaps.cf.d"
+  loop_control:
+    loop_var: "dir_config"
+
+- name: Generate mysql configuration files
+  template:
+    src: "postfix/mysql/{{ file_config }}.j2"
+    dest: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/postfix/mysql/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+   - "mysql_virtual_alias_maps.cf"
+   - "mysql_virtual_alias_domain_maps.cf"
+   - "mysql_virtual_alias_domain_catchall_maps.cf"
+   - "mysql_virtual_domains_maps.cf"
+   - "mysql_virtual_mailbox_maps.cf"
+   - "mysql_virtual_alias_domain_mailbox_maps.cf"
+   - "mysql_relay_domains.cf"
+   - "mysql_transport_maps.cf"
+   - "mysql_virtual_mailbox_limit_maps.cf"
+  loop_control:
+    loop_var: "file_config"
+
+- name: Generate postfix configuration files
+  template:
+    src: "postfix/{{ file_config }}.j2"
+    dest: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/postfix/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+   - "main.cf"
+   - "master.cf"
+   - "dynamicmaps.cf"
+   - "header-checks"
+   - "origin"
+   - "postfix-files"
+   - "certbot.sh"
+  loop_control:
+    loop_var: "file_config"

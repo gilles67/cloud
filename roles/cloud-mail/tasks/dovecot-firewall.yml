@@ -1,0 +1,12 @@
+---
+- name: Firewall Dovecot IPv6
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.mail.dovecot.ipv6 }}"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "993"
+    - "80"

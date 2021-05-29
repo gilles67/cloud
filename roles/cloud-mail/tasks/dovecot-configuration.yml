@@ -1,0 +1,44 @@
+---
+- name: Create dovecot configuration folders
+  file:
+    path: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/dovecot/conf.d"
+    state: directory
+    recurse: yes
+
+- name: Generate dovecot configuration files
+  template:
+    src: "dovecot/{{ file_config }}.j2"
+    dest: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/dovecot/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - "dovecot.conf"
+    - "certbot.sh"
+    - "conf.d/10-auth.conf"
+    - "conf.d/10-director.conf"
+    - "conf.d/10-logging.conf"
+    - "conf.d/10-master.conf"
+    - "conf.d/10-ssl.conf"
+    - "conf.d/10-tcpwrapper.conf"
+    - "conf.d/15-lda.conf"
+    - "conf.d/15-mailboxes.conf"
+    - "conf.d/20-imap.conf"
+    - "conf.d/90-acl.conf"
+    - "conf.d/90-plugin.conf"
+    - "conf.d/90-quota.conf"
+  loop_control:
+    loop_var: "file_config"
+
+- name: Generate dovecot configuration files
+  template:
+    src: "dovecot/{{ file_config }}.j2"
+    dest: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/dovecot/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0640'
+  loop:
+    - "dovecot-oauth2.conf.ext"
+    - "dovecot-sql.conf.ext"
+  loop_control:
+    loop_var: "file_config"

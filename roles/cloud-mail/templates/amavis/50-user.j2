@@ -1,0 +1,18 @@
+use strict;
+
+#
+# Place your configuration directives here.  They will override those in
+# earlier files.
+#
+# See /usr/share/doc/amavisd-new/ for documentation and examples of
+# the directives you can use in this file
+#
+
+$forward_method = "smtp:[{{ features.mail.postfix.ipv6 }}]:10025";
+$notify_method = $forward_method;
+
+$X_HEADER_LINE = "ClamAV at {{ features.mail.amavis.hostname }}";
+
+
+#------------ Do not modify anything below this line -------------
+1;  # ensure a defined return

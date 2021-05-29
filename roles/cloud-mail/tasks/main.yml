@@ -1,0 +1,30 @@
+---
+- name: "Setup Postfixadmin"
+  include: "postfixadmin.yml"
+  when:
+    - features.mail.postfixadmin is defined
+
+- name: "Setup Roundcube"
+  include: "roundcube.yml"
+  when:
+    - features.mail.roundcube is defined
+
+- name: "Setup Postfix"
+  include: "postfix.yml"
+  when:
+    - features.mail.postfix is defined
+
+- name: "Setup Postgrey"
+  include: "postgrey.yml"
+  when:
+    - features.mail.postgrey is defined
+
+- name: "Setup Amavis"
+  include: "amavis.yml"
+  when:
+    - features.mail.amavis is defined
+
+- name: "Setup Dovecot"
+  include: "dovecot.yml"
+  when:
+    - features.mail.dovecot is defined

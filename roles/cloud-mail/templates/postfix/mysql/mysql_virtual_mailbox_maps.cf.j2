@@ -1,0 +1,7 @@
+# Generated File sql/mysql_virtual_mailbox_maps.cf
+user = {{ features.mail.name | default('mail') | lower }}
+password = {{ features.mail.database.user_password }}
+hosts = {{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }}
+dbname = {{ features.mail.name | default('mail') | lower }}
+query = SELECT maildir FROM mailbox WHERE username='%s' AND active = '1'
+#expansion_limit = 100

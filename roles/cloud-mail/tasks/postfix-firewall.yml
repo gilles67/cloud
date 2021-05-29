@@ -1,0 +1,14 @@
+---
+- name: Firewall postfix IPv6
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.mail.postfix.ipv6 }}"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "25"
+    - "80"
+    - "465"
+    - "587"

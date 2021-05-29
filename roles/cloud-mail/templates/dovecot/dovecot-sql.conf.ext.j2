@@ -1,0 +1,20 @@
+# Database diver.
+driver = mysql 
+
+# Database connection string.
+connect = host={{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }} dbname={{ features.mail.name | default('mail') | lower }} user={{ features.mail.name | default('mail') | lower }} password={{ features.mail.database.user_password }}
+
+# Default password scheme.
+default_pass_scheme = MD5-CRYPT
+
+# passdb query to retrieve the password.
+password_query = \
+    SELECT username as user, password, '/var/mail/vmail/%d/%n' as userdb_home, \
+    'maildir:/var/mail/vmail/%d/%n' as userdb_mail, 10000 as userdb_uid, 8 as userdb_gid \
+    FROM mailbox WHERE username = '%u' AND active = '1'
+
+# userdb query to retrieve the user information. It can return fields:
+user_query = \
+    SELECT '/var/mail/vmail/%d/%n' as home, 'maildir:/var/mail/vmail/%d/%n' as mail, \
+    10000 AS uid, 8 AS gid, concat('dirsize:storage=', quota) AS quota \
+    FROM mailbox WHERE username = '%u' AND active = '1'

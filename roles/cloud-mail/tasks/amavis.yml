@@ -1,0 +1,53 @@
+---
+- name: Create amavis configuration folders
+  file:
+    path: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/amavis"
+    state: directory
+    recurse: yes
+
+- name: Generate amavis configuration files
+  template:
+    src: "amavis/{{ file_config }}.j2"
+    dest: "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/amavis/{{ file_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - "01-debian"
+    - "05-domain-id"
+    - "05-node-id"
+    - "15-av-scanners"
+    - "15-content-filter"
+    - "20-debian-defaults"
+    - "25-amavis-helpers"
+    - "30-template-localization"
+    - "50-user"
+  loop_control:
+    loop_var: "file_config"
+
+- name: "Create Amavis container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.amavis"
+    state: present
+    restart_policy: unless-stopped
+    image: "dockmail/amavis"
+    volumes:
+      - "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/amavis/:/etc/amavis/conf.d/"
+    env:
+      TZ: "{{ timezone }}"
+      HOSTNAME: "{{ features.mail.amavis.hostname }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.mail.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.mail.network }}"
+        ipv6_address: "{{ features.mail.amavis.ipv6 }}"
+        links:
+          - "{{ features.mail.name | default('mail') | lower }}.amavis"
+
+- name: "Start Amavis container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.amavis"
+    state: started

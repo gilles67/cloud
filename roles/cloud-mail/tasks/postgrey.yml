@@ -1,0 +1,25 @@
+---
+
+- name: "Create Postgrey container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.postgrey"
+    state: present
+    restart_policy: unless-stopped
+    image: "dockmail/postgrey"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.mail.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.mail.network }}"
+        ipv6_address: "{{ features.mail.postgrey.ipv6 }}"
+        links:
+          - "{{ features.mail.name | default('mail') | lower }}.postfix"
+
+- name: "Start Postgrey container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.postgrey"
+    state: started

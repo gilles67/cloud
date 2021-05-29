@@ -1,0 +1,23 @@
+##
+## SSL settings
+##
+
+# SSL/TLS support: yes, no, required. <doc/wiki/SSL.txt>
+ssl = yes
+
+ssl_cert = </etc/letsencrypt/live/{{ features.mail.dovecot.hostname }}/fullchain.pem
+ssl_key = </etc/letsencrypt/live/{{ features.mail.dovecot.hostname }}/privkey.pem
+
+#ssl_key_password =
+ssl_client_ca_dir = /etc/ssl/certs
+ssl_dh = </usr/share/dovecot/dh.pem
+#ssl_min_protocol = TLSv1
+# SSL ciphers to use, the default is:
+#ssl_cipher_list = ALL:!kRSA:!SRP:!kDHd:!DSS:!aNULL:!eNULL:!EXPORT:!DES:!3DES:!MD5:!PSK:!RC4:!ADH:!LOW@STRENGTH
+# To disable non-EC DH, use:
+#ssl_cipher_list = ALL:!DH:!kRSA:!SRP:!kDHd:!DSS:!aNULL:!eNULL:!EXPORT:!DES:!3DES:!MD5:!PSK:!RC4:!ADH:!LOW@STRENGTH
+
+#ssl_curve_list =
+#ssl_prefer_server_ciphers = no
+#ssl_crypto_device =
+#ssl_options =

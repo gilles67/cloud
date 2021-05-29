@@ -1,0 +1,53 @@
+---
+- name: "Generate Postfix Configuration"
+  include: "postfix-configuration.yml"
+
+- name: "Postfix Firewall Configuration"
+  include: "postfix-firewall.yml"
+
+- name: Create postfix data volume
+  docker_volume:
+    name: "{{ features.mail.name | default('mail') | lower }}_postfix_data"
+    state: present
+
+- name: Create vmail data volume
+  docker_volume:
+    name: "{{ features.mail.name | default('mail') | lower }}_vmail_data"
+    state: present
+- name: Create letsencrypt data volume
+  docker_volume:
+    name: "{{ features.mail.name | default('mail') | lower }}_postfix_letsencrypt"
+    state: present
+
+- name: "Create Postfix container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.postfix"
+    state: present
+    restart_policy: unless-stopped
+    image: "dockmail/postfix"
+    volumes:
+      - "{{ features.mail.name | default('mail') | lower }}_postfix_data:/var/spool/postfix"
+      - "{{ features.mail.name | default('mail') | lower }}_vmail_data:/var/mail"
+      - "{{ features.mail.name | default('mail') | lower }}_postfix_letsencrypt:/etc/letsencrypt"
+      - "/opt/cloud/{{ features.mail.name | default('mail') | lower }}/postfix:/etc/postfix/"
+    env:
+      TZ: "{{ timezone }}"
+      HOSTNAME: "{{ features.mail.postfix.hostname }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.mail.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.mail.network }}"
+        ipv6_address: "{{ features.mail.postfix.ipv6 }}"
+        links:
+          - "{{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }}"
+  when:
+    - features.mail.auth is defined
+    - features.mail.database is defined
+
+- name: "Start Postfix container"
+  docker_container:
+    name: "{{ features.mail.name | default('mail') | lower }}.postfix"
+    state: started

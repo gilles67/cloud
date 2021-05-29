@@ -1,0 +1,2 @@
+#!/bin/bash
+certbot certonly -n --standalone --email {{ features.mail.common.cert_email }} --agree-tos -d {{ features.mail.dovecot.hostname }}
