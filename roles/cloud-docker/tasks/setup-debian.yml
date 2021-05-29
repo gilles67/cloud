@@ -38,6 +38,7 @@
     owner: root
     group: root
     mode: '0644'
+    backup: true
   notify:
     - restart_docker
   register: docker_daemon_update

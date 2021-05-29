@@ -9,9 +9,16 @@
   when: docker is defined
 
 - name: "Firewall setup for Docker"
-  include: "firewall.yml"
+  include: "firewall-home.yml"
   when: 
     - docker is defined
     - wireguard is defined
     - side == "home"
+  
+- name: "Firewall setup for Docker"
+  include: "firewall-cloud.yml"
+  when: 
+    - docker is defined
+    - wireguard is defined
+    - side == "cloud"
   

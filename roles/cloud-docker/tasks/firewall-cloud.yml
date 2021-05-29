@@ -1,0 +1,5 @@
+---
+- name: Firewall allow inter container communication
+  shell: "ufw route allow in on {{ item.br }} out on {{ item.br }}"
+  loop: "{{ docker.network.bridge }}"
+  when: "docker.network.bridge is defined"

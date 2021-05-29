@@ -8,5 +8,6 @@
       - subnet: "{{ item.ipv6 }}"
     driver_options:
       com.docker.network.bridge.name: "{{ item.br }}"
+      com.docker.network.bridge.enable_icc: true
   loop: "{{ docker.network.bridge }}"
   when: "docker.network.bridge is defined"
