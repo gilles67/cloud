@@ -1,0 +1,66 @@
+---
+# Install telegraf repo key
+- name: Install Telegraf repository key
+  apt_key:
+    url: https://repos.influxdata.com/influxdb.key
+
+# Install telegraf repo
+- name: Install Telegraf repository
+  apt_repository:
+    repo: "deb https://repos.influxdata.com/{{ ansible_distribution | lower }} {{ ansible_distribution_release | lower }} stable"
+    state: present
+
+# Install telegraf packages
+- name: Install Telegraf packages
+  apt:
+    name: "{{ item }}"
+    install_recommends: no
+    update_cache: yes
+  loop: 
+    - telegraf
+
+# Generate configuration
+- name: Generate telegraf configuration
+  template:
+    backup: true
+    src: telegraf/telegraf.conf.j2
+    dest: "/etc/telegraf/telegraf.conf"
+    owner: root
+    group: root  
+    mode: '0644'
+  notify:
+    - restart_telegraf
+
+# Generate sudoer file for fail2ban
+- name: Generate sudoer file for fail2ban
+  template:
+    src: telegraf/sudoers.telegraf.j2
+    dest: "/etc/sudoers.d/telegraf"
+    owner: root
+    group: root  
+    mode: '0644'
+  notify:
+    - restart_telegraf
+
+# Add telegraf to Docker group
+- name: Add telegraf to Docker group
+  user:
+    append: true
+    name: telegraf
+    groups: docker
+  when:
+    - docker is defined
+  notify:
+    - restart_telegraf
+
+# Add capability for Wireguard 
+- name: Add capability for Wireguard 
+  capabilities:
+    path: /usr/bin/telegraf
+    capability: CAP_NET_ADMIN+epi
+    state: present
+  when:
+    - wireguard is defined
+  notify:
+    - restart_telegraf
+

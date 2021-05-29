@@ -1,0 +1,57 @@
+# Configuration for telegraf agent
+[agent]
+  interval = "10s"
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_interval = "10s"
+  flush_jitter = "0s"
+  precision = ""
+  debug = false
+  quiet = false
+  logfile = ""
+  hostname = ""
+  omit_hostname = false
+
+[[outputs.influxdb_v2]]	
+  urls = ["{{  telegraf.urls | join('", "') }}"]
+  token = "{{ telegraf.token }}"
+  organization = "{{ telegraf.organization }}"
+  bucket = "{{ telegraf.bucket }}"
+
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+  collect_cpu_time = false
+  report_active = false
+
+[[inputs.disk]]
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs", "overlay", "aufs", "squashfs"]
+
+[[inputs.diskio]]
+
+[[inputs.mem]]
+
+[[inputs.net]]
+
+[[inputs.processes]]
+
+[[inputs.swap]]
+
+[[inputs.system]]
+
+[[inputs.fail2ban]]
+  use_sudo = true
+
+{% if docker is defined %}
+[[inputs.docker]]
+  perdevice = false
+  perdevice_include = ["cpu", "blkio", "network"]
+  total = true
+  total_include = ["cpu", "blkio", "network"]
+{% endif %}
+
+{% if wireguard is defined %}
+[[inputs.wireguard]]
+{% endif %}

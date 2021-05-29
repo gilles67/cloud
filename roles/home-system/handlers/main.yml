@@ -1,5 +1,12 @@
+---
 ## Ubuntu
 - name: restart_networkd
   service:
     name: systemd-networkd
+    state: restarted
+
+## Telegraf
+- name: restart_telegraf
+  service:
+    name: telegraf
     state: restarted

@@ -13,3 +13,9 @@
 # Step 3 : Security configuration
 - name: "{{ ansible_distribution }} Security Setup"
   include: "{{ ansible_distribution | lower }}/03-security-setup.yml"
+
+# Step 4 : Telegraf metric monitoring
+- name: "{{ ansible_distribution }} Telegraf Setup"
+  include: "{{ ansible_distribution | lower }}/04-telegraf-setup.yml"
+  when:
+    - telegraf is defined
