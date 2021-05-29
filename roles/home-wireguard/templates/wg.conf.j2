@@ -1,7 +1,9 @@
 [Interface]
 PrivateKey = {{ wg_private_key[wgitem.if] }}
 Address = {{ wgitem.address }}
+{% if wgitem.mode == "gateway"%}
 ListenPort = {{ wgitem.port }}
+{% endif %}
 {% if wgitem.mode == "child"%}
 {% if wgitem.table is defined %}
 Table = {{ wgitem.table }}
