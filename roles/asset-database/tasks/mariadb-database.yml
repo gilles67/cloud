@@ -40,3 +40,9 @@
 
 - include: mariadb-phpmyadmin.yml
   when: current_item.database.admin_hostname is defined
+
+- include: mariadb-user.yml
+  loop: "{{ current_item.database.otherusers.keys() | list }}"
+  loop_control:
+    loop_var: "dbuser"
+  when: current_item.database.otherusers is defined

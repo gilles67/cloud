@@ -44,8 +44,8 @@
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"
-    links:
-      - "{{ current_item.name | default(fitem) | lower }}.mariadb"
+        links:
+          - "{{ current_item.name | default(fitem) | lower }}.mariadb"
   when:
     - current_item.database.admin_hostname is defined
     - not current_item.auth is defined
