@@ -1,0 +1,9 @@
+---
+- name: "Install samba"
+  include: "samba-{{ hostvars[inventory_hostname].features[fitem].samba.type }}.yml"
+  loop: "{{ features.keys() | list }}"
+  loop_control:
+    loop_var: "fitem"
+  when: 
+    - hostvars[inventory_hostname].features[fitem].samba is defined
+    - hostvars[inventory_hostname].features[fitem].samba.type is defined

@@ -1,0 +1,35 @@
+---
+- name: "Test user existing"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share id {{ username }}"
+  register: user_stat
+  failed_when: no
+  changed_when: no
+
+- name: "Create user"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share useradd -M -N -g share -s /usr/sbin/nologin {{ username }}"
+  when:
+    - not user_stat.rc == 0
+
+- name: "Create smb password"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share  /bin/bash -c \"(echo {{ current_item.samba.users[username].password }} ; echo {{ current_item.samba.users[username].password }}) | smbpasswd -s -a {{ username }}\""
+
+- name: "Create {{ username }} folder"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share mkdir -p /app/volume/{{ username }}"
+  failed_when: no
+  changed_when: no
+  when:
+    - not user_stat.rc == 0
+
+- name: "Set user/group on {{ username }} folder"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share chown {{ username }}:share /app/volume/{{ username }}"
+  failed_when: no
+  changed_when: no
+  when:
+    - not user_stat.rc == 0
+
+- name: "Set security on {{ username }} folder"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share chmod 755 /app/volume/{{ username }}"
+  failed_when: no
+  changed_when: no
+  when:
+    - not user_stat.rc == 0
