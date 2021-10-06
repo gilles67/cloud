@@ -9,7 +9,7 @@ address = ":443"
 [certificatesResolvers]
 [certificatesResolvers.letsencrypt]
 [certificatesResolvers.letsencrypt.acme]
-email = "{{ current_item.proxy.email_contact }}"
+email = "{{ current_item.proxy.email }}"
 storage = "/etc/traefik/acme.json"
 [certificatesResolvers.letsencrypt.acme.httpChallenge]
 entryPoint = "web"

@@ -7,11 +7,11 @@
     server: "{{ nsupdate.server }}"
     zone: "{{ nsupdate.zone }}"
     type: "AAAA"
-    record: "{{ current_item.proxy.admin_hostname }}."
+    record: "{{ current_item.proxy.hostname }}."
     value: "{{ current_item.proxy.ipv6 }}"
   when:
     - nsupdate.zone is defined
     - nsupdate.tsig is defined
     - nsupdate.server is defined
-    - current_item.proxy.admin_hostname is defined
+    - current_item.proxy.hostname is defined
     - current_item.proxy.ipv6 is defined
