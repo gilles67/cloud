@@ -1,0 +1,62 @@
+---
+- name: "OnlyOffice DNS configuration"
+  include: "onlyoffice-dns.yml"
+
+- name: "OnlyOffice Firewall configuration"
+  include: "onlyoffice-firewall.yml"
+
+- name: "Create OnlyOffice volumes"
+  docker_volume:
+    name: "onlyoffice_data"
+    state: present
+
+## https://helpcenter.onlyoffice.com/installation/docs-community-install-docker.aspx
+
+- name: "Create OnlyOffice container"
+  docker_container:
+    name: "nextcloud.onlyoffice"
+    state: present
+    restart_policy: unless-stopped
+    image: "onlyoffice/documentserver:{{ onlyoffice_ds_version }}"
+    volumes:
+      - "onlyoffice_data:/var/www/onlyoffice/Data"
+    env:
+      TZ: "{{ timezone }}"
+      DB_TYPE: "mariadb"
+      DB_HOST: "nextcloud.mariadb"
+      DB_NAME: "onlyoffice"
+      DB_USER: "{{ features.nextcloud.database.mariadb.databases.onlyoffice.username }}" 
+      DB_PWD: "{{ features.nextcloud.database.mariadb.databases.onlyoffice.password }}"
+      AMQP_URI: "amqp://guest:guest@nextcloud.rabbitmq"
+      AMQP_TYPE: "rabbitmq"
+      REDIS_SERVER_HOST: "nextcloud.redis"
+      #JWT_ENABLED: "true"
+      #JWT_SECRET: "{{ features.nextcloud.onlyoffice.secret }}"
+      USE_UNAUTHORIZED_STORAGE: "true"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.nextcloud.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.onlyoffice.rule: "Host(`{{ features.nextcloud.onlyoffice.hostname }}`)"
+      traefik.http.routers.onlyoffice.entrypoints: "web"
+      traefik.http.routers.onlyoffice.middlewares: "httpsredirect@file,onlyofficehead@file"
+      traefik.http.routers.onlyoffice-ssl.rule: "Host(`{{ features.nextcloud.onlyoffice.hostname }}`)"
+      traefik.http.routers.onlyoffice-ssl.entrypoints: "websecure"
+      traefik.http.routers.onlyoffice-ssl.middlewares: "hsts@file,httpsredirect@file,onlyofficehead@file"
+      traefik.http.routers.onlyoffice-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.onlyoffice-ssl.tls.options: "intermediate@file"
+      traefik.http.services.onlyoffice-ssl.loadbalancer.server.port: "80"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.nextcloud.network }}"
+        ipv6_address: "{{ features.nextcloud.onlyoffice.ipv6 }}"
+        links:
+          - "nextcloud.redis"
+          - "nextcloud.mariadb"
+          - "nextcloud.rabbitmq"
+
+- name: "Start OnlyOffice container"
+  docker_container:
+    name: "nextcloud.onlyoffice"
+    state: started

@@ -1,0 +1,15 @@
+---
+- name: "Nextcloud setup"
+  include: "nextcloud-setup.yml"
+  when: 
+    - features.nextcloud is defined
+
+- name: "Onlyoffice setup"
+  include: "onlyoffice-setup.yml"
+  when: 
+    - features.nextcloud.onlyoffice is defined
+
+- name: "Collabora setup"
+  include: "collabora-setup.yml"
+  when: 
+    - features.nextcloud.collabora is defined

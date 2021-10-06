@@ -1,0 +1,53 @@
+---
+- name: "Collabora DNS configuration"
+  include: "collabora-dns.yml"
+
+- name: "Collabora Firewall configuration"
+  include: "collabora-firewall.yml"
+
+# - name: "Create Collabora volumes"
+#   docker_volume:
+#     name: "collabora_data"
+#     state: present
+
+- name: "Create Collabora container"
+  docker_container:
+    name: "nextcloud.collabora"
+    state: present
+    restart_policy: unless-stopped
+    image: "collabora/code:{{ collabora_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      domain: "{{ features.nextcloud.hostname }}"
+      server_name: "{{  features.nextcloud.collabora.hostname }}"
+      dictionaries: "fr_FR"
+      DONT_GEN_SSL_CERT: "set"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=true --o:admin_console.enable=true --o:admin_console.username={{ features.nextcloud.collabora.username }} --o:admin_console.password={{ features.nextcloud.collabora.password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.nextcloud.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.collabora.rule: "Host(`{{ features.nextcloud.collabora.hostname }}`)"
+      traefik.http.routers.collabora.entrypoints: "web"
+      traefik.http.routers.collabora.middlewares: "httpsredirect@file"
+      traefik.http.routers.collabora-ssl.rule: "Host(`{{ features.nextcloud.collabora.hostname }}`)"
+      traefik.http.routers.collabora-ssl.entrypoints: "websecure"
+      traefik.http.routers.collabora-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.collabora-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.collabora-ssl.tls.options: "intermediate@file"
+      traefik.http.services.collabora-ssl.loadbalancer.server.port: "9980"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.nextcloud.network }}"
+        ipv6_address: "{{ features.nextcloud.collabora.ipv6 }}"
+        links:
+          - "nextcloud.redis"
+          - "nextcloud.mariadb"
+          - "nextcloud.rabbitmq"
+    
+
+- name: "Start Collabora container"
+  docker_container:
+    name: "nextcloud.collabora"
+    state: started

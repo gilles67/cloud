@@ -1,0 +1,68 @@
+---
+- name: "Nextcloud DNS configuration"
+  include: "nextcloud-dns.yml"
+
+- name: "Nextcloud Firewall configuration"
+  include: "nextcloud-firewall.yml"
+
+- name: "Create Nexcloud volumes"
+  docker_volume:
+    name: "nextcloud_{{ item }}"
+    state: present
+  loop:
+    - "apps"
+    - "data"
+
+- name: "Create Nexcloud folders"
+  file:
+    path: "/opt/home/nextcloud/nextcloud/config"
+    state: directory
+    recurse: yes
+
+- name: "Create Nextcloud container"
+  docker_container:
+    name: "nextcloud"
+    state: present
+    restart_policy: unless-stopped
+    image: "nextcloud:{{ nextcloud_version }}"
+    volumes:
+      - "nextcloud_apps:/var/www/html/custom_apps"
+      - "/opt/home/nextcloud/nextcloud/config:/var/www/html/config"
+      - "nextcloud_data:/var/www/html/data"
+    env:
+      TZ: "{{ timezone }}"
+      MYSQL_DATABASE: "nextcloud"
+      MYSQL_USER: "{{ features.nextcloud.database.mariadb.databases.nextcloud.username }}"
+      MYSQL_PASSWORD: "{{ features.nextcloud.database.mariadb.databases.nextcloud.password }}"
+      MYSQL_HOST: "nextcloud.mariadb"
+      REDIS_HOST: "nextcloud.redis"
+      NEXTCLOUD_ADMIN_USER: "{{ features.nextcloud.admin.username }}"
+      NEXTCLOUD_ADMIN_PASSWORD: "{{ features.nextcloud.admin.password }}"
+      NEXTCLOUD_TRUSTED_DOMAINS: "{{ features.nextcloud.hostname }}"
+      TRUSTED_PROXIES: "{{ features.nextcloud.proxy.ipv6 }}/128"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.nextcloud.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.nextcloud.rule: "Host(`{{ features.nextcloud.hostname }}`)"
+      traefik.http.routers.nextcloud.entrypoints: "web"
+      traefik.http.routers.nextcloud.middlewares: "httpsredirect@file"
+      traefik.http.routers.nextcloud-ssl.rule: "Host(`{{ features.nextcloud.hostname }}`)"
+      traefik.http.routers.nextcloud-ssl.entrypoints: "websecure"
+      traefik.http.routers.nextcloud-ssl.middlewares: "hsts@file,httpsredirect@file,nextcloudregex@file"
+      traefik.http.routers.nextcloud-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.nextcloud-ssl.tls.options: "intermediate@file"
+      traefik.http.services.nextcloud-ssl.loadbalancer.server.port: "80"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.nextcloud.network }}"
+        ipv6_address: "{{ features.nextcloud.ipv6 }}"
+        links:
+          - "nextcloud.redis"
+          - "nextcloud.mariadb"
+
+- name: "Start Nextcloud container"
+  docker_container:
+    name: "nextcloud"
+    state: started
