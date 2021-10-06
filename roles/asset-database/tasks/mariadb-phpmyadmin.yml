@@ -7,17 +7,16 @@
     server: "{{ nsupdate.server }}"
     zone: "{{ nsupdate.zone }}"
     type: "CNAME"
-    record: "{{ current_item.database.admin_hostname }}."
-    value: "{{ current_item.proxy.admin_hostname }}."
+    record: "{{ current_item.database.mariadb.admin.hostname }}."
+    value: "{{ current_item.proxy.hostname }}."
   when:
     - nsupdate.zone is defined
     - nsupdate.tsig is defined
     - nsupdate.server is defined
-    - current_item.proxy.admin_hostname is defined
-    - current_item.proxy.ipv6 is defined
-    - current_item.database.admin_hostname is defined
+    - current_item.proxy.hostname is defined
+    - current_item.database.mariadb.admin is defined
 
-- name: Create phpmyadmin container
+- name: "Create phpmyadmin container"
   docker_container:
     name: "{{ current_item.name | default(fitem) | lower }}.mariadb.pma"
     state: present
@@ -26,16 +25,16 @@
     env:
       TZ: "{{ timezone }}"
       PMA_HOST: "{{ current_item.name | default(fitem) | lower }}.mariadb"
-      MYSQL_ROOT_PASSWORD: "{{ current_item.database.root_password }}"
+      MYSQL_ROOT_PASSWORD: "{{ current_item.database.mariadb.root_password }}"
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
       docker.network: "{{ current_item.network }}"
       traefik.enable: "true"
-      traefik.http.routers.admindb.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
+      traefik.http.routers.admindb.rule: "Host(`{{ current_item.database.mariadb.admin.hostname }}`)"
       traefik.http.routers.admindb.entrypoints: "web"
       traefik.http.routers.admindb.middlewares: "httpsredirect@file"
-      traefik.http.routers.admindb-ssl.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
+      traefik.http.routers.admindb-ssl.rule: "Host(`{{ current_item.database.mariadb.admin.hostname }}`)"
       traefik.http.routers.admindb-ssl.entrypoints: "websecure"
       traefik.http.routers.admindb-ssl.middlewares: "hsts@file,httpsredirect@file"
       traefik.http.routers.admindb-ssl.tls.certresolver: "letsencrypt"
@@ -44,14 +43,15 @@
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"
+        ipv6_address: "{{ urrent_item.database.mariadb.admin.ipv6 }}"
         links:
           - "{{ current_item.name | default(fitem) | lower }}.mariadb"
   when:
-    - current_item.database.admin_hostname is defined
+    - current_item.database.mariadb.admin is defined
     - not current_item.auth is defined
 
 
-- name: Create phpmyadmin container
+- name: "Create phpmyadmin container"
   docker_container:
     name: "{{ current_item.name | default(fitem) | lower }}.mariadb.pma"
     state: present
@@ -60,16 +60,16 @@
     env:
       TZ: "{{ timezone }}"
       PMA_HOST: "{{ current_item.name | default(fitem) | lower }}.mariadb"
-      MYSQL_ROOT_PASSWORD: "{{ current_item.database.root_password }}"
+      MYSQL_ROOT_PASSWORD: "{{ current_item.database.mariadb.root_password }}"
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
       docker.network: "{{ current_item.network }}"
       traefik.enable: "true"
-      traefik.http.routers.admindb.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
+      traefik.http.routers.admindb.rule: "Host(`{{ current_item.database.mariadb.admin.hostname  }}`)"
       traefik.http.routers.admindb.entrypoints: "web"
       traefik.http.routers.admindb.middlewares: "httpsredirect@file"
-      traefik.http.routers.admindb-ssl.rule: "Host(`{{ current_item.database.admin_hostname  }}`)"
+      traefik.http.routers.admindb-ssl.rule: "Host(`{{ current_item.database.mariadb.admin.hostname  }}`)"
       traefik.http.routers.admindb-ssl.entrypoints: "websecure"
       traefik.http.routers.admindb-ssl.middlewares: "hsts@file,httpsredirect@file,fwauthmid"
       traefik.http.routers.admindb-ssl.tls.certresolver: "letsencrypt"
@@ -78,10 +78,11 @@
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"
-    links:
-      - "{{ current_item.name | default(fitem) | lower }}.mariadb"
+        ipv6_address: "{{ current_item.database.mariadb.admin.ipv6 }}"
+        links:
+          - "{{ current_item.name | default(fitem) | lower }}.mariadb"
   when:
-    - current_item.database.admin_hostname is defined
+    - current_item.database.mariadb.admin is defined
     - current_item.auth is defined
 
 - name: Start mariadb container
@@ -89,4 +90,4 @@
     name: "{{ current_item.name | default(fitem) | lower }}.mariadb.pma"
     state: started
   when:
-    - current_item.database.admin_hostname is defined
+    - current_item.database.mariadb.admin is defined

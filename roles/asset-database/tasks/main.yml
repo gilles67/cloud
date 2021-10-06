@@ -1,9 +1,8 @@
 ---
 - name: "Install database"
-  include: "{{ hostvars[inventory_hostname].features[fitem].database.vendor }}-database.yml"
+  include: "database.yml"
   loop: "{{ features.keys() | list }}"
   loop_control:
     loop_var: "fitem"
   when: 
     - hostvars[inventory_hostname].features[fitem].database is defined
-    - hostvars[inventory_hostname].features[fitem].database.vendor is defined

@@ -1,48 +1,23 @@
 ---
-- name: "Define current scope values"
-  set_fact: 
-    current_item: "{{ hostvars[inventory_hostname].features[fitem] }}"
+- name: "Test database existing"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.mariadb mysql --user=root --password={{ current_item.database.mariadb.root_password }} --execute=\"USE {{ dbname }};\""
+  register: database_stat
+  failed_when: no
+  changed_when: no
 
-- name: "Feature item values"
-  debug: 
-    var: current_item
+## not database_stat.rc == 0 -> when the database not exists : the "USE {{ dbname }};" return a exit code 1 -> database not exists.
 
-- name: Create mariadb data volume
-  docker_volume:
-    name: "{{ current_item.name | default(fitem) | lower }}_mariadb_data"
-    state: present
+- name: "Create database"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.mariadb mysql --user=root --password={{ current_item.database.mariadb.root_password }} --execute=\"CREATE DATABASE IF NOT EXISTS {{ dbname }};\""
+  when:
+    - not database_stat.rc == 0
 
-- name: Create mariadb container
-  docker_container:
-    name: "{{ current_item.name | default(fitem) | lower }}.mariadb"
-    state: present
-    restart_policy: unless-stopped
-    image: "mariadb:{{ mariadb_version }}"
-    volumes:
-      - "{{ current_item.name | default(fitem) | lower }}_mariadb_data:/var/lib/mysql"
-    env:
-      TZ: "{{ timezone }}"
-      MYSQL_ROOT_PASSWORD: "{{ current_item.database.root_password }}"
-      MYSQL_DATABASE: "{{ current_item.name | default(fitem) | lower }}"
-      MYSQL_USER: "{{ current_item.name | default(fitem) | lower }}"
-      MYSQL_PASSWORD: "{{ current_item.database.user_password }}"
-    labels:
-      one.h42.nhfw.enable: "true"
-      one.h42.nhfw.dns.register: "true"
-    networks_cli_compatible: yes
-    networks:
-      - name: "{{ current_item.network }}"
+- name: "Create user"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.mariadb mysql --user=root --password={{ current_item.database.mariadb.root_password }} --execute=\"GRANT ALL PRIVILEGES ON {{ dbname }}.* TO '{{ current_item.database.mariadb.databases[dbname].username }}'@'%' IDENTIFIED BY '{{ current_item.database.mariadb.databases[dbname].password }}';\""
+  when:
+    - not database_stat.rc == 0
 
-- name: Start mariadb container
-  docker_container:
-    name: "{{ current_item.name | default(fitem) | lower }}.mariadb"
-    state: started
-
-- include: mariadb-phpmyadmin.yml
-  when: current_item.database.admin_hostname is defined
-
-- include: mariadb-user.yml
-  loop: "{{ current_item.database.otherusers.keys() | list }}"
-  loop_control:
-    loop_var: "dbuser"
-  when: current_item.database.otherusers is defined
+- name: "Flush privileges"
+  shell: "docker exec {{ current_item.name | default(fitem) | lower }}.mariadb mysql --user=root --password={{ current_item.database.mariadb.root_password }} --execute=\"FLUSH PRIVILEGES;\""
+  when:
+    - not database_stat.rc == 0

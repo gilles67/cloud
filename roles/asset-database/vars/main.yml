@@ -1,2 +1,3 @@
 mariadb_version: "10.5.8-focal"
 phpmyadmin_version: "5.0.4-apache"
+redis_version: "6.2.4-buster"

@@ -1,0 +1,8 @@
+---
+- name: "Install database vendor"
+  include: "{{ vitem }}-setup.yml"
+  loop: "{{ hostvars[inventory_hostname].features[fitem].database.keys() | list }}"
+  loop_control:
+    loop_var: "vitem"
+  when: 
+    - hostvars[inventory_hostname].features[fitem].database is defined

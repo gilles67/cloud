@@ -1,0 +1,35 @@
+---
+- name: "Define current scope values"
+  set_fact: 
+    current_item: "{{ hostvars[inventory_hostname].features[fitem] }}"
+
+- name: "Feature item values"
+  debug: 
+    var: current_item
+
+# - name: "Create redis data volume"
+#   docker_volume:
+#     name: "{{ current_item.name | default(fitem) | lower }}_redis_data"
+#     state: present
+
+- name: "Create redis container"
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.redis"
+    state: present
+    restart_policy: unless-stopped
+    image: "redis:{{ redis_version }}"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ current_item.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+        ipv6_address: "{{ current_item.database.redis.ipv6 }}"
+
+- name: "Start redis container"
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.redis"
+    state: started
