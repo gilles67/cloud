@@ -1,0 +1,25 @@
+---
+- name: "Define current scope values"
+  set_fact: 
+    current_item: "{{ hostvars[inventory_hostname].features[fitem] }}"
+
+- name: "Create RabbitMQ container"
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.rabbitmq"
+    state: present
+    restart_policy: unless-stopped
+    image: "rabbitmq:{{ rabbitmq_version }}"
+    volumes:
+      - "/opt/asset/{{ current_item.name | default(fitem) | lower }}/broker/mosquitto.conf:/mosquitto/config/mosquitto.conf"
+    env:
+      TZ: "{{ timezone }}"
+      RABBITMQ_ERLANG_COOKIE: "{{ current_item.broker.secret }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+        ipv6_address: "{{ current_item.broker.ipv6 }}"
+
+- name: "Start RabbitMQ container"
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.rabbitmq"
+    state: started
