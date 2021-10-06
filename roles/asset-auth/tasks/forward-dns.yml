@@ -8,10 +8,10 @@
     zone: "{{ nsupdate.zone }}"
     type: "CNAME"
     record: "{{ current_item.auth.hostname }}."
-    value: "{{ current_item.proxy.admin_hostname }}."
+    value: "{{ current_item.proxy.hostname }}."
   when:
     - nsupdate.zone is defined
     - nsupdate.tsig is defined
     - nsupdate.server is defined
-    - current_item.proxy.admin_hostname is defined
+    - current_item.proxy.hostname is defined
     - current_item.auth.hostname is defined
