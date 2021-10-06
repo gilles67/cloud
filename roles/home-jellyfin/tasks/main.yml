@@ -1,0 +1,5 @@
+---
+- name: "Jellylfin setup"
+  include: "jellyfin-setup.yml"
+  when: 
+    - features.jellyfin is defined

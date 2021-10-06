@@ -1,0 +1,4 @@
+---
+jellyfin_version: 10.7.7
+jellyfin_hw_packages:
+  - vainfo
