@@ -41,3 +41,20 @@ accessControlAllowOrigin = "*"
 X-Forwarded-Proto = "https"
 {% endif %}
 
+{% if fitem == 'jellyfin' %}
+[http.middlewares.jellyfinmw]
+[http.middlewares.jellyfinmw.headers]
+SSLHost = "{{ current_item.hostname }}"
+SSLRedirect = true
+STSSeconds = 315360000
+STSIncludeSubdomains = true
+STSPreload = true
+forceSTSHeader = true
+SSLForceHost = true
+frameDeny = true
+contentTypeNosniff = true
+browserXSSFilter = true
+customFrameOptionsValue = "allow-from https://{{ current_item.hostname }}"
+[http.middlewares.jellyfinmw.headers.customrequestheaders]
+X-Robots-Tag="noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
+{% endif %}
