@@ -34,10 +34,7 @@
     volumes:
       - "jellyfin_config:/config"
       - "jellyfin_cache:/cache"
-    mounts:
-      - type: bind
-        source: "{{ features.jellyfin.media }}"
-        target: "/media"
+      - "{{ features.jellyfin.media }}:/media"
     devices:
       - "/dev/dri/renderD128"
       - "/dev/dri/card0"
@@ -46,6 +43,9 @@
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "volume"
+      one.h42.backup.volume.ignore: "jellyfin_cache"
       docker.network: "{{ features.jellyfin.network }}"
       traefik.enable: "true"
       traefik.http.routers.jellyfin.rule: "Host(`{{ features.jellyfin.hostname }}`)"
@@ -53,7 +53,7 @@
       traefik.http.routers.jellyfin.middlewares: "httpsredirect@file"
       traefik.http.routers.jellyfin-ssl.rule: "Host(`{{ features.jellyfin.hostname }}`)"
       traefik.http.routers.jellyfin-ssl.entrypoints: "websecure"
-      traefik.http.routers.jellyfin-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.jellyfin-ssl.middlewares: "jellyfinmw@file"
       traefik.http.routers.jellyfin-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.jellyfin-ssl.tls.options: "intermediate@file"
       traefik.http.services.jellyfin-ssl.loadbalancer.server.port: "8096"
