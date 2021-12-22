@@ -1,0 +1,11 @@
+---
+- name: "Invalid feature"
+  debug: 
+    msg: "!! Not supported feature !!"
+  when: 
+    - features.ntop is defined
+
+# - name: "ntop setup"
+#   include: "ntop-setup.yml"
+#   when: 
+#     - features.ntop is defined

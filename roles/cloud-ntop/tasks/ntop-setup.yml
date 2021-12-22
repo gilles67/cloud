@@ -1,0 +1,48 @@
+- name: "Add dns record for ntop"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "CNAME"
+    record: "{{ features.ntop.hostname }}."
+    value: "{{ features.ntop.proxy.hostname }}."
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.ntop.proxy.hostname is defined
+    - features.ntop.hostname is defined
+
+- name: "Create ntop container"
+  docker_container:
+    name: "ntop"
+    state: present
+    restart_policy: unless-stopped
+    image: "ntop/ntopng"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.ntop.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.ntop.rule: "Host(`{{ features.ntop.hostname }}`)"
+      traefik.http.routers.ntop.entrypoints: "web"
+      traefik.http.routers.ntop.middlewares: "httpsredirect@file"
+      traefik.http.routers.ntop-ssl.rule: "Host(`{{ features.ntop.hostname }}`)"
+      traefik.http.routers.ntop-ssl.entrypoints: "websecure"
+      traefik.http.routers.ntop-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.ntop-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.ntop-ssl.tls.options: "intermediate@file"
+      traefik.http.services.ntop-ssl.loadbalancer.server.port: "3000"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.ntop.network }}"
+        ipv6_address: "{{ features.ntop.ipv6 }}"
+
+- name: "Start ntop container"
+  docker_container:
+    name: "ntop"
+    state: started
