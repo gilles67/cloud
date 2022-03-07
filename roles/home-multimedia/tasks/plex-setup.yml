@@ -1,0 +1,71 @@
+---
+- name: "Plex Hardware Acceleration"
+  include: "plex-hw.yml"
+
+- name: "Plex DNS Registration"
+  include: "plex-dns.yml"
+
+- name: "Firewall plex outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.plex.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+
+- name: "Create Plex volumes"
+  docker_volume:
+    name: "plex_{{ item }}"
+    state: present
+  loop:
+    - "config"
+    - "transcode"
+
+- name: "Create Plex container"
+  docker_container:
+    name: "plex"
+    state: present
+    restart_policy: unless-stopped
+    image: "plexinc/pms-docker:{{ plex_version }}"
+    volumes:
+      - "plex_config:/config"
+      - "plex_cache:/transcode"
+      - "{{ features.multimedia.media }}:/data"
+    devices:
+      - "/dev/dri/renderD128"
+      - "/dev/dri/card0"
+    env:
+      TZ: "{{ timezone }}"
+      PLEX_CLAIM: "{{ features.multimedia.plex.plex_token }}"
+      HOSTNAME: "{{ features.multimedia.plex.hostname }}"
+      ADVERTISE_IP: "https://{{ features.multimedia.plex.hostname }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "volume"
+      one.h42.backup.volume.ignore: "plex_cache"
+      docker.network: "{{ features.multimedia.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.plex.rule: "Host(`{{ features.multimedia.plex.hostname }}`)"
+      traefik.http.routers.plex.entrypoints: "web"
+      traefik.http.routers.plex.middlewares: "httpsredirect@file"
+      traefik.http.routers.plex-ssl.rule: "Host(`{{ features.multimedia.plex.hostname }}`)"
+      traefik.http.routers.plex-ssl.entrypoints: "websecure"
+      traefik.http.routers.plex-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.plex-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.plex-ssl.tls.options: "intermediate@file"
+      traefik.http.services.plex-ssl.loadbalancer.server.port: "32400"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.multimedia.network }}"
+        ipv6_address: "{{ features.multimedia.plex.ipv6 }}"
+
+- name: "Start Plex container"
+  docker_container:
+    name: "plex"
+    state: started

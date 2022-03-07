@@ -1,8 +1,8 @@
 ---
 # Install security packages
-- name: Install jellyfin supports packages
+- name: Install Plex supports packages
   apt:
     name: "{{ item }}"
     state: present
     install_recommends: no
-  loop: "{{ jellyfin_hw_packages }}"
+  loop: "{{ plex_hw_packages }}"

@@ -1,0 +1,12 @@
+---
+- name: "Plex setup"
+  include: "plex-setup.yml"
+  when: 
+    - features.multimedia is defined
+    - features.multimedia.plex is defined
+
+- name: "Jellyfin setup"
+  include: "jellyfin-setup.yml"
+  when: 
+    - features.multimedia is defined
+    - features.multimedia.jellyfin is defined
