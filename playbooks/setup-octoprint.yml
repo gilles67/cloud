@@ -1,0 +1,9 @@
+---
+- hosts: all
+  roles:
+    - kwoodson.yedit
+    - home-system
+    - home-wireguard
+    - cloud-docker
+    - asset-proxy
+#    - home-octoprint
