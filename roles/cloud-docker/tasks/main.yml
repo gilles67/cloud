@@ -8,6 +8,12 @@
   include: "network.yml"
   when: docker is defined
 
+- name: "Docker NFS volume setup"
+  include: "volume-nfs.yml"
+  when: 
+    - docker is defined
+    - docker.volume_nfs is defined
+
 - name: "Firewall setup for Docker"
   include: "firewall-home.yml"
   when: 

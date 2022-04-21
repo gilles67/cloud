@@ -32,6 +32,7 @@
     - containerd.io
     - python3-docker
     - python3-dnspython
+    - nfs-common
 
 - name: Enable Docker
   systemd:

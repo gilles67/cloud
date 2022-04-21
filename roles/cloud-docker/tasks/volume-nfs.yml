@@ -1,0 +1,12 @@
+---
+- name: Create a volume
+  docker_volume:
+    name: "{{ item.name }}"
+    driver: "local"
+    driver_options:
+      type: "nfs"
+      o: "addr={{ item.server }},rw"
+      device: ":{{ item.path }}"
+  loop: "{{ docker.volume_nfs }}"
+  when: 
+    - "docker.volume_nfs is defined"
