@@ -1,0 +1,65 @@
+---
+- name: "Pyload DNS Registration"
+  include: "pyload-dns.yml"
+
+- name: "Firewall Pyload outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.pyload.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+
+- name: "Create Pyload volumes"
+  docker_volume:
+    name: "pyload_{{ item }}"
+    state: present
+  loop:
+    - "config"
+
+- name: "Create Pyload container"
+  docker_container:
+    name: "multimedia.pyload"
+    state: present
+    restart_policy: unless-stopped
+    image: "pyload/pyload"
+    volumes:
+      - "pyload_config:/config"
+      - "{{ features.multimedia.media }}:/data"
+    devices:
+      - "/dev/dri/renderD128"
+      - "/dev/dri/card0"
+    env:
+      TZ: "{{ timezone }}"
+      STORAGEDIR: "/data/share/downloads"
+      PGID: "10000"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "volume"
+      one.h42.backup.volume.ignore: "{{ features.multimedia.media }}"
+      docker.network: "{{ features.multimedia.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.pyload.rule: "Host(`{{ features.multimedia.pyload.hostname }}`)"
+      traefik.http.routers.pyload.entrypoints: "web"
+      traefik.http.routers.pyload.middlewares: "httpsredirect@file"
+      traefik.http.routers.pyload-ssl.rule: "Host(`{{ features.multimedia.pyload.hostname }}`)"
+      traefik.http.routers.pyload-ssl.entrypoints: "websecure"
+      traefik.http.routers.pyload-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.pyload-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.pyload-ssl.tls.options: "intermediate@file"
+      traefik.http.services.pyload-ssl.loadbalancer.server.port: "8000"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.multimedia.network }}"
+        ipv6_address: "{{ features.multimedia.pyload.ipv6 }}"
+
+- name: "Start Pyload container"
+  docker_container:
+    name: "multimedia.pyload"
+    state: started

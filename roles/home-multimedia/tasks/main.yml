@@ -10,3 +10,9 @@
   when: 
     - features.multimedia is defined
     - features.multimedia.jellyfin is defined
+
+- name: "PyLoad setup"
+  include: "pyload-setup.yml"
+  when: 
+    - features.multimedia is defined
+    - features.multimedia.pyload is defined

@@ -1,0 +1,12 @@
+---
+- name: "Firewall Octoprint outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.octoprint.octoprint.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"

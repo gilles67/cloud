@@ -3,6 +3,6 @@ jellyfin_version: 10.7.7
 jellyfin_hw_packages:
   - vainfo
 
-plex_version: 1.25.6.5577-c8bd13540
+plex_version: 1.26.0.5715-8cf78dab3
 plex_hw_packages:
   - vainfo
