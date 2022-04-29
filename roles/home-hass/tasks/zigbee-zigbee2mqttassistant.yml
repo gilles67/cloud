@@ -8,12 +8,12 @@
     zone: "{{ nsupdate.zone }}"
     type: "CNAME"
     record: "{{ features.hass.adapter.zigbee.admin_hostname }}."
-    value: "{{ features.hass.proxy.admin_hostname }}."
+    value: "{{ features.hass.proxy.hostname }}."
   when:
     - nsupdate.zone is defined
     - nsupdate.tsig is defined
     - nsupdate.server is defined
-    - features.hass.proxy.admin_hostname is defined
+    - features.hass.proxy.hostname is defined
     - features.hass.adapter.zigbee.admin_hostname is defined
 
 # - name: "Create Zigbee2MQTTAssistant container"
