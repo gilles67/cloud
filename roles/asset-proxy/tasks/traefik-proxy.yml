@@ -75,6 +75,7 @@
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ current_item.proxy.ipv6 }}"
+        ipv4_address: "{{ current_item.proxy.ipv4 | default(None) }}"
 
 - name: Start traefik container
   docker_container:

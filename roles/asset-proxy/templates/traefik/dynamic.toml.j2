@@ -41,10 +41,10 @@ accessControlAllowOrigin = "*"
 X-Forwarded-Proto = "https"
 {% endif %}
 
-{% if fitem == 'jellyfin' %}
+{% if fitem == 'multimedia' %}
 [http.middlewares.jellyfinmw]
 [http.middlewares.jellyfinmw.headers]
-SSLHost = "{{ current_item.hostname }}"
+SSLHost = "{{ current_item.jellyfin.hostname }}"
 SSLRedirect = true
 STSSeconds = 315360000
 STSIncludeSubdomains = true
@@ -54,7 +54,7 @@ SSLForceHost = true
 frameDeny = true
 contentTypeNosniff = true
 browserXSSFilter = true
-customFrameOptionsValue = "allow-from https://{{ current_item.hostname }}"
+customFrameOptionsValue = "allow-from https://{{ current_item.jellyfin.hostname }}"
 [http.middlewares.jellyfinmw.headers.customrequestheaders]
 X-Robots-Tag="noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
 {% endif %}
