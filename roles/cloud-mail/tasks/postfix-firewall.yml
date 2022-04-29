@@ -12,3 +12,42 @@
     - "80"
     - "465"
     - "587"
+
+- name: Firewall postfix DNS resolver and rbl IPv6
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.mail.postfix.ipv6 }}"
+    dest: "::/0"
+    proto: "udp"
+    port: "53"
+
+- name: Firewall postfix DNS resolver and rbl IPv4
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.mail.postfix.ipv4 }}"
+    dest: "0.0.0.0/0"
+    proto: "udp"
+    port: "53"
+
+
+# - name: Firewall postfix DNS resolver IPv6
+#   ufw:
+#     rule: allow
+#     route: yes
+#     src: "{{ features.mail.postfix.ipv6 }}"
+#     dest: "{{ item }}"
+#     proto: "udp"
+#     port: "53"
+#   loop: "{{ features.mail.postfix.dns.servers | ipv6 }}"
+
+# - name: Firewall postfix DNS resolver IPv4
+#   ufw:
+#     rule: allow
+#     route: yes
+#     src: "{{ features.mail.postfix.ipv4 }}"
+#     dest: "{{ item }}"
+#     proto: "udp"
+#     port: "53"
+#   loop: "{{ features.mail.postfix.dns.servers | ipv4 }}"

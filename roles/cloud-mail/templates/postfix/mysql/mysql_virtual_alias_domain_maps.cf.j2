@@ -1,6 +1,6 @@
 # Generated File sql/mysql_virtual_alias_domain_maps.cf
-user = {{ features.mail.name | default('mail') | lower }}
-password = {{ features.mail.database.user_password }}
-hosts = {{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }}
-dbname = {{ features.mail.name | default('mail') | lower }}
+user = {{ features.mail.postfix.database.username }}
+password = {{ features.mail.postfix.database.password }}
+hosts = {{ features.mail.postfix.database.server }}
+dbname = {{ features.mail.postfix.database.dbname }}
 query = SELECT goto FROM alias,alias_domain WHERE alias_domain.alias_domain = '%d' and alias.address = CONCAT('%u', '@', alias_domain.target_domain) AND alias.active='1' AND alias_domain.active='1'
