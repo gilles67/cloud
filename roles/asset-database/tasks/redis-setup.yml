@@ -28,6 +28,7 @@
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ current_item.database.redis.ipv6 }}"
+        ipv4_address: "{{ current_item.database.redis.ipv4 | default(None) }}"
 
 - name: "Start redis container"
   docker_container:

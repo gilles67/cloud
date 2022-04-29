@@ -16,7 +16,7 @@
     - current_item.proxy.hostname is defined
     - current_item.database.mariadb.admin is defined
 
-- name: "Create phpmyadmin container"
+- name: "Create phpmyadmin container ⚠️ (Unsecured) 🔓"
   docker_container:
     name: "{{ current_item.name | default(fitem) | lower }}.mariadb.pma"
     state: present
@@ -44,6 +44,7 @@
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ urrent_item.database.mariadb.admin.ipv6 }}"
+        ipv4_address: "{{ current_item.database.mariadb.admin.ipv4 | default(None) }}"
         links:
           - "{{ current_item.name | default(fitem) | lower }}.mariadb"
   when:
@@ -51,7 +52,7 @@
     - not current_item.auth is defined
 
 
-- name: "Create phpmyadmin container"
+- name: "Create phpmyadmin container (secured) 🔒"
   docker_container:
     name: "{{ current_item.name | default(fitem) | lower }}.mariadb.pma"
     state: present
@@ -79,6 +80,7 @@
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ current_item.database.mariadb.admin.ipv6 }}"
+        ipv4_address: "{{ current_item.database.mariadb.admin.ipv4 | default(None) }}"
         links:
           - "{{ current_item.name | default(fitem) | lower }}.mariadb"
   when:

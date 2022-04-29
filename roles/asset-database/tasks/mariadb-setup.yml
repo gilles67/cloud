@@ -12,6 +12,11 @@
     name: "{{ current_item.name | default(fitem) | lower }}_mariadb_data"
     state: present
 
+- name: "Create mariadb backup volume"
+  docker_volume:
+    name: "{{ current_item.name | default(fitem) | lower }}_mariadb_backup"
+    state: present
+
 - name: "Create mariadb container"
   docker_container:
     name: "{{ current_item.name | default(fitem) | lower }}.mariadb"
@@ -20,17 +25,22 @@
     image: "mariadb:{{ mariadb_version }}"
     volumes:
       - "{{ current_item.name | default(fitem) | lower }}_mariadb_data:/var/lib/mysql"
+      - "{{ current_item.name | default(fitem) | lower }}_mariadb_backup:/var/backup"
     env:
       TZ: "{{ timezone }}"
       MYSQL_ROOT_PASSWORD: "{{ current_item.database.mariadb.root_password }}"
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "mariadb"
+      one.h42.backup.mariadb.volume: "{{ current_item.name | default(fitem) | lower }}_mariadb_backup"
       docker.network: "{{ current_item.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ current_item.database.mariadb.ipv6 }}"
+        ipv4_address: "{{ current_item.database.mariadb.ipv4 | default(None) }}"
 
 - name: "Start mariadb container"
   docker_container:
