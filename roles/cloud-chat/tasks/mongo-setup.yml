@@ -1,0 +1,37 @@
+---
+- name: "Create Mongo data volume"
+  docker_volume:
+    name: "mongo_dbdata"
+    state: present
+
+- name: "Create Mongo container"
+  docker_container:
+    name: "chat.mongo"
+    state: present
+    restart_policy: unless-stopped
+    image: "mongo:{{ mongo_version }}"
+    env:
+      TZ: "{{ timezone }}"
+    volumes:
+      - "mongo_dbdata:/data/db"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.chat.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.chat.network }}"
+        ipv6_address: "{{ features.chat.mongo.ipv6 }}"
+        ipv4_address: "{{ features.chat.mongo.ipv4 | default(None) }}"
+    command: 
+      - "--replSet rs0 --oplogSize 128"
+
+- name: "Start Mongo container"
+  docker_container:
+    name: "chat.mongo"
+    state: started
+
+- name: "Init Mongo database"
+  shell: "docker exec chat.mongo mongo --eval \"printjson(rs.initiate())\""
+  changed_when: no
