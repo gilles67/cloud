@@ -1,0 +1,11 @@
+---
+- hosts: all
+  roles:
+    - kwoodson.yedit
+    - cloud-docker
+    - home-wireguard
+    - asset-proxy
+    - asset-database
+    - asset-auth
+    - asset-broker
+    - cloud-gaming
