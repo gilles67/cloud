@@ -1,0 +1,6 @@
+---
+- name: "Guacamole Setup"
+  include: "guacamole-setup.yml"
+  when: 
+    - features.gaming is defined
+    - features.gaming.guacamole is defined

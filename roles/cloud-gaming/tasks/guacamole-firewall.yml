@@ -1,0 +1,12 @@
+---
+- name: "Firewall guacamole openid auth"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.gaming.guacamole.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
