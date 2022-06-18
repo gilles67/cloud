@@ -4,3 +4,9 @@
   when: 
     - features.gaming is defined
     - features.gaming.guacamole is defined
+
+- name: "H42 Gaming Console Setup"
+  include: "h42gaming-setup.yml"
+  when: 
+    - features.gaming is defined
+    - features.gaming.h42gaming is defined

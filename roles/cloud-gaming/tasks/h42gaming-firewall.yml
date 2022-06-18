@@ -1,0 +1,12 @@
+---
+- name: "Firewall H42 Gaming Console openid auth"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.gaming.h42gaming.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
