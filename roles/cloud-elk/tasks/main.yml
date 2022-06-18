@@ -1,0 +1,15 @@
+---
+- name: "Setup Elasticsearch"
+  include: "elasticsearch-setup.yml"
+  when:     
+    - features is defined
+    - features.elk is defined
+    - features.elk.elasticsearch is defined
+
+- name: "Setup Kibana"
+  include: "kibana-setup.yml"
+  when:     
+    - features is defined
+    - features.elk is defined
+    - features.elk.kibana is defined
+    - features.elk.kibana is defined

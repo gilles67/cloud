@@ -1,0 +1,9 @@
+server:
+    host: "::"
+    name: "{{ features.elk.kibana.hostname }}"
+    publicBaseUrl: "https://{{ features.elk.kibana.hostname }}"
+elasticsearch:
+    hosts:
+{% for host in features.elk.kibana.elasticsearch_servers %}
+        - "http://{{ host }}:9200"
+{% endfor %}
