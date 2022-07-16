@@ -1,3 +1,3 @@
-mariadb_version: "10.7.3-focal"
-phpmyadmin_version: "5.1.3-apache"
-redis_version: "7.0-bullseye"
+mariadb_version: "10.7.4-focal"
+phpmyadmin_version: "5.2.0-apache"
+redis_version: "7.0.3-bullseye"
