@@ -35,6 +35,7 @@
     networks:
       - name: "{{ features.mail.network }}"
         ipv6_address: "{{ features.mail.roundcube.ipv6 }}"
+        ipv4_address: "{{ features.mail.roundcube.ipv4 | default(None) }}"
         links:
           - "{{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }}"
   when:

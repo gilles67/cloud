@@ -48,3 +48,10 @@
   notify:
     - restart_networkd
 
+- name: Install wifi service
+  service:
+    name: wpa_supplicant@{{ netitem.if }}
+    state: started
+    enabled: yes
+  when: netitem.ssids is defined
+

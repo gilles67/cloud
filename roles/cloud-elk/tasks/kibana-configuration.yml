@@ -1,0 +1,14 @@
+---
+- name: "Create Kibana configuration folder"
+  file:
+    path: "/opt/cloud/elk/kibana/config"
+    state: directory
+    recurse: yes
+
+- name: "Generate Kibana configuration file"
+  template:
+    src: "kibana.yml.j2"
+    dest: "/opt/cloud/elk/kibana/config/kibana.yml"
+    owner: root
+    group: root
+    mode: '0644'

@@ -42,7 +42,7 @@
     image: "docker-samba/share"
     volumes:
       - "/opt/asset/{{ current_item.name | default(fitem) | lower }}/samba/share/:/app/samba/"
-      - "{{ current_item.samba.path }}:/app/volume/"
+      - "{{ current_item.samba.volume }}:/app/volume/"
     env:
       TZ: "{{ timezone }}"
     networks_cli_compatible: yes

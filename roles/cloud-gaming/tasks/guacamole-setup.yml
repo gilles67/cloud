@@ -1,0 +1,91 @@
+---
+- name: "Create Guacamole folder"
+  file:
+    path: "/opt/cloud/gaming/guacamole"
+    state: directory
+    recurse: yes
+
+- name: "Create Guacamole configuration"
+  template:
+    src: guacamole/guacamole.properties.j2
+    dest: "/opt/cloud/gaming/guacamole/guacamole.properties"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Guacamole DNS configuration"
+  include: "guacamole-dns.yml"
+
+- name: "Guacamole firewall settings"
+  include: "guacamole-firewall.yml"
+
+- name: "Create Guacamole guacd"
+  docker_container:
+    name: "gaming.guacamole-guacd"
+    state: present
+    restart_policy: unless-stopped
+    image: "guacamole/guacd:{{ guacamole_version }}"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.gaming.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.gaming.network }}"
+        ipv6_address: "{{ features.gaming.guacd.ipv6 }}"
+        ipv4_address: "{{ features.gaming.guacd.ipv4 | default(None) }}"
+
+
+- name: "Create Guacamole container"
+  docker_container:
+    name: "gaming.guacamole"
+    state: present
+    restart_policy: unless-stopped
+    image: "guacamole/guacamole:{{ guacamole_version }}"
+    volumes: 
+      - "/opt/cloud/gaming/guacamole/:/opt/config/"
+    env:
+      TZ: "{{ timezone }}"
+      GUACAMOLE_HOME: "/opt/config"
+      MYSQL_HOSTNAME: "gaming.mariadb"
+      MYSQL_DATABASE: "guacamole"
+      MYSQL_USER: "{{ features.gaming.database.mariadb.databases.guacamole.username }}"
+      MYSQL_PASSWORD: "{{ features.gaming.database.mariadb.databases.guacamole.password }}"
+      GUACD_HOSTNAME: "gaming.guacamole-guacd"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.gaming.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.guacamole.rule: "Host(`{{ features.gaming.guacamole.hostname }}`)"
+      traefik.http.routers.guacamole.entrypoints: "web"
+      traefik.http.routers.guacamole.middlewares: "httpsredirect@file"
+      traefik.http.routers.guacamole-ssl.rule: "Host(`{{ features.gaming.guacamole.hostname }}`)"
+      traefik.http.routers.guacamole-ssl.entrypoints: "websecure"
+      traefik.http.routers.guacamole-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.guacamole-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.guacamole-ssl.tls.options: "intermediate@file"
+      traefik.http.services.guacamole-ssl.loadbalancer.server.port: "8080"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.gaming.network }}"
+        ipv6_address: "{{ features.gaming.guacamole.ipv6 }}"
+        ipv4_address: "{{ features.gaming.guacamole.ipv4 | default(None) }}"
+        links:
+          - "gaming.mariadb"
+          - "gaming.guacamole-guacd"
+
+
+- name: "Start Guacd container"
+  docker_container:
+    name: "gaming.guacamole-guacd"
+    state: started
+
+- name: "Start Guacamole container"
+  docker_container:
+    name: "gaming.guacamole"
+    state: started

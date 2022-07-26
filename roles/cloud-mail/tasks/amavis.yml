@@ -44,6 +44,7 @@
     networks:
       - name: "{{ features.mail.network }}"
         ipv6_address: "{{ features.mail.amavis.ipv6 }}"
+        ipv4_address: "{{ features.mail.amavis.ipv4 | default(None) }}"
         links:
           - "{{ features.mail.name | default('mail') | lower }}.amavis"
 

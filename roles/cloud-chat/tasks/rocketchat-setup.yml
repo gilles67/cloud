@@ -1,0 +1,42 @@
+---
+- name: "🚀Rocket.Chat DNS configuration"
+  include: "rocketchat-dns.yml"
+
+- name: "Create 🚀Rocket.Chat container"
+  docker_container:
+    name: "chat.rocketchat"
+    state: present
+    restart_policy: unless-stopped
+    image: "rocket.chat:{{ rockerchat_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      MONGO_URL: "mongodb://chat.mongo:27017/rocketchat"
+      MONGO_OPLOG_URL: "mongodb://chat.mongo:27017/local"
+      ROOT_URL: "https://{{ features.chat.rocketchat.hostname }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.chat.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.rchat.rule: "Host(`{{ features.chat.rocketchat.hostname }}`)"
+      traefik.http.routers.rchat.entrypoints: "web"
+      traefik.http.routers.rchat.middlewares: "httpsredirect@file"
+      traefik.http.routers.rchat-ssl.rule: "Host(`{{ features.chat.rocketchat.hostname }}`)"
+      traefik.http.routers.rchat-ssl.entrypoints: "websecure"
+      traefik.http.routers.rchat-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.rchat-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.rchat-ssl.tls.options: "intermediate@file"
+      traefik.http.services.rchat-ssl.loadbalancer.server.port: "3000"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.chat.network }}"
+        ipv6_address: "{{ features.chat.rocketchat.ipv6 }}"
+        ipv4_address: "{{ features.chat.rocketchat.ipv4 | default(None) }}"
+        links:
+          - "chat.mongo"
+
+- name: "Start 🚀Rocket.Chat container"
+  docker_container:
+    name: "chat.rocketchat"
+    state: started

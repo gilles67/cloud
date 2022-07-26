@@ -41,8 +41,10 @@
     networks:
       - name: "{{ features.mail.network }}"
         ipv6_address: "{{ features.mail.postfix.ipv6 }}"
+        ipv4_address: "{{ features.mail.postfix.ipv4 | default(None) }}"
         links:
-          - "{{ features.mail.name | default('mail') | lower }}.{{ features.mail.database.vendor }}"
+          - "{{ features.mail.postfix.database.server }}"
+    dns_servers: "{{ features.mail.postfix.dns.servers }}"
   when:
     - features.mail.auth is defined
     - features.mail.database is defined

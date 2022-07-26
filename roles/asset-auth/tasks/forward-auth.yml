@@ -49,6 +49,7 @@
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ current_item.auth.ipv6 }}"
+        ipv4_address: "{{ current_item.auth.ipv4 | default(None) }}"
   when: 
     - ansible_architecture == "aarch64"
 
@@ -90,6 +91,7 @@
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ current_item.auth.ipv6 }}"
+        ipv4_address: "{{ current_item.auth.ipv4 | default(None) }}"
   when: 
     - ansible_architecture == "x86_64"
 

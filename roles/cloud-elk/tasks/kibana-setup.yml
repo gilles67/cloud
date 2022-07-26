@@ -1,0 +1,73 @@
+---
+- name: "Kibana DNS Registration"
+  include: "kibana-dns.yml"
+
+- name: "Kibana Configuration"
+  include: "kibana-configuration.yml"
+
+- name: "Create Kibana container"
+  docker_container:
+    name: "elk.kibana"
+    state: present
+    restart_policy: unless-stopped
+    image: "kibana:{{ kibana_version }}"
+    volumes:
+      - "/opt/cloud/elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.elk.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.kibana.rule: "Host(`{{ features.elk.kibana.hostname }}`)"
+      traefik.http.routers.kibana.entrypoints: "web"
+      traefik.http.routers.kibana.middlewares: "httpsredirect@file"
+      traefik.http.routers.kibana-ssl.rule: "Host(`{{ features.elk.kibana.hostname  }}`)"
+      traefik.http.routers.kibana-ssl.entrypoints: "websecure"
+      traefik.http.routers.kibana-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.kibana-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.kibana-ssl.tls.options: "intermediate@file"
+      traefik.http.services.kibana-ssl.loadbalancer.server.port: "5601"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.elk.network }}"
+        ipv6_address: "{{ features.elk.kibana.ipv6 }}"
+  when:
+    - not features.elk.auth is defined
+
+- name: "Create Kibana container (secured)"
+  docker_container:
+    name: "elk.kibana"
+    state: present
+    restart_policy: unless-stopped
+    image: "kibana:{{ kibana_version }}"
+    volumes:
+      - "/opt/cloud/elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.elk.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.kibana.rule: "Host(`{{ features.elk.kibana.hostname }}`)"
+      traefik.http.routers.kibana.entrypoints: "web"
+      traefik.http.routers.kibana.middlewares: "httpsredirect@file"
+      traefik.http.routers.kibana-ssl.rule: "Host(`{{ features.elk.kibana.hostname  }}`)"
+      traefik.http.routers.kibana-ssl.entrypoints: "websecure"
+      traefik.http.routers.kibana-ssl.middlewares: "hsts@file,httpsredirect@file,fwauthmid"
+      traefik.http.routers.kibana-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.kibana-ssl.tls.options: "intermediate@file"
+      traefik.http.services.kibana-ssl.loadbalancer.server.port: "5601"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.elk.network }}"
+        ipv6_address: "{{ features.elk.kibana.ipv6 }}"
+  when:
+    - features.elk.auth is defined
+
+- name: "Start Kibana container"
+  docker_container:
+    name: "elk.kibana"
+    state: started

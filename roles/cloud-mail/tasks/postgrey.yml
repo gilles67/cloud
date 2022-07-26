@@ -16,6 +16,7 @@
     networks:
       - name: "{{ features.mail.network }}"
         ipv6_address: "{{ features.mail.postgrey.ipv6 }}"
+        ipv4_address: "{{ features.mail.postgrey.ipv4 | default(None) }}"
         links:
           - "{{ features.mail.name | default('mail') | lower }}.postfix"
 

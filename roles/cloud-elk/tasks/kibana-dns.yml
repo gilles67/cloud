@@ -1,5 +1,5 @@
 ---
-- name: "Add dns record for Jellyfin"
+- name: "Add dns record Kibana"
   nsupdate:
     key_name: "tsig-{{ nsupdate.zone }}"
     key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
@@ -7,11 +7,11 @@
     server: "{{ nsupdate.server }}"
     zone: "{{ nsupdate.zone }}"
     type: "CNAME"
-    record: "{{ features.jellyfin.hostname }}."
-    value: "{{ features.jellyfin.proxy.hostname }}."
+    record: "{{ features.elk.kibana.hostname }}."
+    value: "{{ features.elk.proxy.hostname }}."
   when:
     - nsupdate.zone is defined
     - nsupdate.tsig is defined
     - nsupdate.server is defined
-    - features.jellyfin.proxy.hostname is defined
-    - features.jellyfin.hostname is defined
+    - features.elk.kibana.hostname is defined
+    - features.elk.proxy.hostname is defined

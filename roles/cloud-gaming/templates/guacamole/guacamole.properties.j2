@@ -1,0 +1,7 @@
+
+openid-authorization-endpoint: {{ features.gaming.guacamole.auth.oidc_url }}/protocol/openid-connect/auth
+openid-jwks-endpoint: {{ features.gaming.guacamole.auth.oidc_url }}/protocol/openid-connect/certs
+openid-issuer: {{ features.gaming.guacamole.auth.oidc_url }}
+openid-client-id: {{ features.gaming.guacamole.auth.oidc_id }}
+openid-redirect-uri: https://{{ features.gaming.guacamole.hostname }}/guacamole/
+extension-priority: *, openid

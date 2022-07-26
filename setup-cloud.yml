@@ -1,8 +1,21 @@
 ---
 - hosts: all
   roles:
-    - home-system
-    - cloud-docker
-    - cloud-domain
-    - cloud-proxy
-    - cloud-database
+    - kwoodson.yedit
+    # - home-system
+    - home-wireguard
+    # - cloud-docker
+    - asset-broker
+    - asset-proxy
+    - asset-database
+    - asset-auth
+    - asset-samba
+    # - home-hass
+    # - cloud-domain
+    # - cloud-infra
+    # - cloud-keycloak
+    # - cloud-tick
+    # - cloud-elk
+    # - cloud-mail
+    # - home-nextcloud
+    # - home-multimedia

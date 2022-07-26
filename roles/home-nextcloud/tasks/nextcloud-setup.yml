@@ -43,6 +43,9 @@
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "volume"
+      one.h42.backup.volume.include_bind: "true"
       docker.network: "{{ features.nextcloud.network }}"
       traefik.enable: "true"
       traefik.http.routers.nextcloud.rule: "Host(`{{ features.nextcloud.hostname }}`)"

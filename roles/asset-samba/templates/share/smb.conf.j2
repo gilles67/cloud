@@ -23,6 +23,10 @@ browseable = yes
 force directory mode = 0775 
 force create mode = 0664 
 valid users = {{ current_item.samba.users.keys() | join(', ') }}
+vfs objects = recycle
+recycle:repository = .Recycle
+recycle:keeptree = yes
+recycle:versions = yes
 
 {% for user in current_item.samba.users.keys() %}
 [{{ user }}]
@@ -34,4 +38,9 @@ browseable = yes
 force directory mode = 0755
 force create mode = 0644 
 valid users = {{ user }}
+vfs objects = recycle
+recycle:repository = .Recycle
+recycle:keeptree = yes
+recycle:versions = yes
+
 {% endfor %}

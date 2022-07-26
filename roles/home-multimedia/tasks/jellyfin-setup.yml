@@ -9,7 +9,7 @@
   ufw:
     rule: allow
     route: yes
-    src: "{{ features.jellyfin.ipv6 }}"
+    src: "{{ features.multimedia.jellyfin.ipv6 }}"
     dest: "::/0"
     proto: "tcp"
     port: "{{ item }}"
@@ -34,7 +34,7 @@
     volumes:
       - "jellyfin_config:/config"
       - "jellyfin_cache:/cache"
-      - "{{ features.jellyfin.media }}:/media"
+      - "{{ features.multimedia.media }}:/media"
     devices:
       - "/dev/dri/renderD128"
       - "/dev/dri/card0"
@@ -46,12 +46,12 @@
       one.h42.backup.enable: "true"
       one.h42.backup.profile: "volume"
       one.h42.backup.volume.ignore: "jellyfin_cache"
-      docker.network: "{{ features.jellyfin.network }}"
+      docker.network: "{{ features.multimedia.network }}"
       traefik.enable: "true"
-      traefik.http.routers.jellyfin.rule: "Host(`{{ features.jellyfin.hostname }}`)"
+      traefik.http.routers.jellyfin.rule: "Host(`{{ features.multimedia.jellyfin.hostname }}`)"
       traefik.http.routers.jellyfin.entrypoints: "web"
       traefik.http.routers.jellyfin.middlewares: "httpsredirect@file"
-      traefik.http.routers.jellyfin-ssl.rule: "Host(`{{ features.jellyfin.hostname }}`)"
+      traefik.http.routers.jellyfin-ssl.rule: "Host(`{{ features.multimedia.jellyfin.hostname }}`)"
       traefik.http.routers.jellyfin-ssl.entrypoints: "websecure"
       traefik.http.routers.jellyfin-ssl.middlewares: "jellyfinmw@file"
       traefik.http.routers.jellyfin-ssl.tls.certresolver: "letsencrypt"
@@ -59,8 +59,8 @@
       traefik.http.services.jellyfin-ssl.loadbalancer.server.port: "8096"
     networks_cli_compatible: yes
     networks:
-      - name: "{{ features.jellyfin.network }}"
-        ipv6_address: "{{ features.jellyfin.ipv6 }}"
+      - name: "{{ features.multimedia.network }}"
+        ipv6_address: "{{ features.multimedia.jellyfin.ipv6 }}"
 
 - name: "Start Jellyfin container"
   docker_container:

@@ -1,0 +1,6 @@
+---
+- name: "Octoprint setup"
+  include: "octoprint-setup.yml"
+  when: 
+    - features.octoprint is defined
+

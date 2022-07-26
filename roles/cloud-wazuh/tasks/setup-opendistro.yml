@@ -1,0 +1,15 @@
+- name: "Setup OpenDistro ElasticSearch"
+  include: "opendistro-elasticsearch.yml"
+  when:     
+  - features is defined
+  - features.wazuh is defined
+  - features.wazuh.opendistro is defined
+  - features.wazuh.opendistro.elk is defined
+
+- name: "Setup OpenDistro ElasticSearch"
+  include: "opendistro-elasticsearch.yml"
+  when:
+  - features is defined
+  - features.wazuh is defined
+  - features.wazuh.opendistro is defined
+  - features.wazuh.opendistro.kibana is defined

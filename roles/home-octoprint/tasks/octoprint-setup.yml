@@ -1,0 +1,51 @@
+---
+- name: "Octoprint DNS Registration"
+  include: "octoprint-dns.yml"
+
+- name: "Octoprint Firewall setup"
+  include: "octoprint-firewall.yml"
+
+- name: "Create Octoprint data volume"
+  docker_volume:
+    name: "octoprint_data"
+    state: present
+
+- name: "Create Octoprint container"
+  docker_container:
+    name: "octoprint"
+    state: present
+    restart_policy: unless-stopped
+    image: "octoprint/octoprint:{{ octoprint_version }}"
+    volumes:
+      - "octoprint_data:/octoprint"
+    # devices:
+      # - "/dev/ttyACM0"
+      # - "/dev/video0"
+    env:
+      TZ: "{{ timezone }}"
+      ENABLE_MJPG_STREAMER: "True"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "volume"
+      docker.network: "{{ features.octoprint.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.octo.rule: "Host(`{{ features.octoprint.octoprint.hostname }}`)"
+      traefik.http.routers.octo.entrypoints: "web"
+      traefik.http.routers.octo.middlewares: "httpsredirect@file"
+      traefik.http.routers.octo-ssl.rule: "Host(`{{ features.octoprint.octoprint.hostname  }}`)"
+      traefik.http.routers.octo-ssl.entrypoints: "websecure"
+      traefik.http.routers.octo-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.octo-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.octo-ssl.tls.options: "intermediate@file"
+      traefik.http.services.octo-ssl.loadbalancer.server.port: "80"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.octoprint.network }}"
+        ipv6_address: "{{ features.octoprint.octoprint.ipv6 }}"
+
+- name: "Start Octoprint container"
+  docker_container:
+    name: "octoprint"
+    state: started

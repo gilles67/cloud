@@ -1,0 +1,12 @@
+---
+- name: "Mongo setup"
+  include: "mongo-setup.yml"
+  when: 
+    - features.chat is defined
+    - features.chat.mongo is defined
+
+- name: "🚀Rocket.Chat setup"
+  include: "rocketchat-setup.yml"
+  when: 
+    - features.chat is defined
+    - features.chat.rocketchat is defined

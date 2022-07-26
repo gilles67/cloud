@@ -1,0 +1,52 @@
+---
+- name: "Create H42 Gaming Console folder"
+  file:
+    path: "/opt/cloud/gaming/console"
+    state: directory
+    recurse: yes
+
+- name: "H42 Gaming Console DNS configuration"
+  include: "h42gaming-dns.yml"
+
+- name: "H42 Gaming Console firewall settings"
+  include: "h42gaming-firewall.yml"
+
+- name: "Create H42 Gaming Console container"
+  docker_container:
+    name: "gaming.console"
+    state: present
+    restart_policy: unless-stopped
+    image: "h42-gaming/console"
+    volumes: 
+      - "/opt/cloud/gaming/console/db.sqlite3:/h42gaming/db.sqlite3"
+    env:
+      TZ: "{{ timezone }}"
+      H42GAMING_HOSTNAME: "{{ features.gaming.h42gaming.hostname }}"
+      MQTT_SERVER: "{{ features.gaming.broker.ipv6 }}"
+      DJANGO_SECRET: "{{ features.gaming.h42gaming.django_secret }}"
+      AGENT_WOL: "[2a0e:e701:1123:20:7::1]"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.gaming.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.h42gaming.rule: "Host(`{{ features.gaming.h42gaming.hostname }}`)"
+      traefik.http.routers.h42gaming.entrypoints: "web"
+      traefik.http.routers.h42gaming.middlewares: "httpsredirect@file"
+      traefik.http.routers.h42gaming-ssl.rule: "Host(`{{ features.gaming.h42gaming.hostname }}`)"
+      traefik.http.routers.h42gaming-ssl.entrypoints: "websecure"
+      traefik.http.routers.h42gaming-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.h42gaming-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.h42gaming-ssl.tls.options: "intermediate@file"
+      traefik.http.services.h42gaming-ssl.loadbalancer.server.port: "8000"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.gaming.network }}"
+        ipv6_address: "{{ features.gaming.h42gaming.ipv6 }}"
+        ipv4_address: "{{ features.gaming.h42gaming.ipv4 | default(None) }}"
+
+- name: "Start H42 Gaming Console container"
+  docker_container:
+    name: "gaming.console"
+    state: started
