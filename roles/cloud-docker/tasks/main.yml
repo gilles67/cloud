@@ -14,17 +14,22 @@
     - docker is defined
     - docker.volume_nfs is defined
 
+
+- name: "Docker volume setup"
+  include: "volume.yml"
+  when: 
+    - docker is defined
+    - docker.volume is defined
+
 - name: "Firewall setup for Docker"
   include: "firewall-home.yml"
   when: 
     - docker is defined
-    - wireguard is defined
     - side == "home"
   
 - name: "Firewall setup for Docker"
   include: "firewall-cloud.yml"
   when: 
     - docker is defined
-    - wireguard is defined
     - side == "cloud"
   

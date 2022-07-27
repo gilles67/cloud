@@ -1,5 +1,5 @@
 ---
-- name: Create a volume
+- name: Create a volume NFS
   docker_volume:
     name: "{{ item.name }}"
     driver: "local"

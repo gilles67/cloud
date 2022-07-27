@@ -1,0 +1,12 @@
+---
+- name: Create a volume Local
+  docker_volume:
+    name: "{{ item.name }}"
+    driver: "local"
+    driver_options:
+      type: "none"
+      o: "bind"
+      device: ":{{ item.path }}"
+  loop: "{{ docker.volume }}"
+  when: 
+    - "docker.volume is defined"
