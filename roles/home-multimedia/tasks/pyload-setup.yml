@@ -26,17 +26,14 @@
     name: "multimedia.pyload"
     state: present
     restart_policy: unless-stopped
-    image: "pyload/pyload"
+    image: "linuxserver/pyload"
     volumes:
       - "pyload_config:/config"
-      - "{{ features.multimedia.media }}:/data"
-    devices:
-      - "/dev/dri/renderD128"
-      - "/dev/dri/card0"
+      - "{{ features.multimedia.media }}/cache/downloads:/downloads"
     env:
       TZ: "{{ timezone }}"
-      STORAGEDIR: "/data/share/downloads"
       PGID: "10000"
+      PUID: "10000"
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
