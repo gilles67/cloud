@@ -42,6 +42,7 @@ X-Forwarded-Proto = "https"
 {% endif %}
 
 {% if fitem == 'multimedia' %}
+{% if 'jellyfin' in current_item %}
 [http.middlewares.jellyfinmw]
 [http.middlewares.jellyfinmw.headers]
 SSLHost = "{{ current_item.jellyfin.hostname }}"
@@ -57,4 +58,5 @@ browserXSSFilter = true
 customFrameOptionsValue = "allow-from https://{{ current_item.jellyfin.hostname }}"
 [http.middlewares.jellyfinmw.headers.customrequestheaders]
 X-Robots-Tag="noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
+{% endif %}
 {% endif %}
