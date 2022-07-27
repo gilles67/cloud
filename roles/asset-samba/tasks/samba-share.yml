@@ -59,12 +59,27 @@
   ufw:
     rule: allow
     route: yes
-    src: "::/0"
+    src: "{{ item.1  }}"
     dest: "{{ current_item.samba.ipv6 }}"
     proto: "tcp"
-    port: "{{ item }}"
-  loop: 
+    port: "{{ item.0 }}"
+  with_nested: 
     - "445"
+    - "{{ current_item.samba.allowed }}"
+  when: "current_item.samba.allowed is defined"
+
+- name: "Firewall Samba share inbound (udp/443) ?"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ item.1  }}"
+    dest: "{{ current_item.samba.ipv6 }}"
+    proto: "udp"
+    port: "{{ item.0 }}"
+  with_nested: 
+    - "443"
+    - "{{ current_item.samba.allowed }}"
+  when: "current_item.samba.allowed is defined"
 
 - name: "Create users"
   include: samba-share-user.yml
@@ -87,16 +102,23 @@
   shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share mkdir -p /app/volume/share"
   failed_when: no
   changed_when: no
+  when:
+  - current_item.samba.create_user_forlder is defined
 
 - name: "Set user/group on share folder"
   shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share chown root:share /app/volume/share"
   failed_when: no
   changed_when: no
+  when:
+    - current_item.samba.create_user_forlder is defined
+
 
 - name: "Set user/group on share folder"
   shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share chmod 775 /app/volume/share"
   failed_when: no
   changed_when: no
+  when:
+  - current_item.samba.create_user_forlder is defined
 
 - name: "Restart Samba share container"
   docker_container:

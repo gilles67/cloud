@@ -17,11 +17,17 @@
 - name: "Create {{ username }} folder"
   shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share mkdir -p /app/volume/{{ username }}"
   changed_when: no
+  when:
+    - current_item.samba.create_user_forlder is defined
 
 - name: "Set user/group on {{ username }} folder"
   shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share chown {{ username }}:share /app/volume/{{ username }}"
   changed_when: no
+  when:
+    - current_item.samba.create_user_forlder is defined  
 
 - name: "Set security on {{ username }} folder"
   shell: "docker exec {{ current_item.name | default(fitem) | lower }}.share chmod 755 /app/volume/{{ username }}"
   changed_when: no
+  when:
+  - current_item.samba.create_user_forlder is defined

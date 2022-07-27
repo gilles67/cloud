@@ -16,7 +16,11 @@ smb passwd file = /app/samba/smbpasswd
 
 [share]
 comment = Shared folder
+{% if current_item.samba.create_user_forlder is defined %}
 path = /app/volume/share
+{% else %}
+path = /app/volume
+{% endif %}
 read only = no
 guest ok = no
 browseable = yes
@@ -28,6 +32,7 @@ recycle:repository = .Recycle
 recycle:keeptree = yes
 recycle:versions = yes
 
+{% if current_item.samba.create_user_forlder is defined %}
 {% for user in current_item.samba.users.keys() %}
 [{{ user }}]
 comment = {{ user }}'s personal folder
@@ -44,3 +49,4 @@ recycle:keeptree = yes
 recycle:versions = yes
 
 {% endfor %}
+{% endif %}
