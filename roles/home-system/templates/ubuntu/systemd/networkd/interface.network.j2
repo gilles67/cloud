@@ -14,3 +14,11 @@ DHCP={{ netitem.dhcp }}
 {% if netitem.privacy is defined %}
 IPv6PrivacyExtensions={{ netitem.privacy }}
 {% endif %}
+
+{% if netitem.addresses is defined %}
+{% for address in netitem.addresses %}
+[Address]
+Label={{ netitem.if }}:{{ loop.index }}
+Address={{ address }}
+{% endfor %}
+{% endif %}
