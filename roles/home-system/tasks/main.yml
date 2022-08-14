@@ -9,14 +9,6 @@
     src: hosts.j2
     dest: "/etc/hosts"
 
-## Setup Timezone
-- name: "Configure timezone"
-  timezone:
-    hwclock: UTC
-    name: "{{ timezone }}"
-  when: timezone is defined
-
-
 ## Specific distribution
 - name: "{{ ansible_distribution }} Home System Setup"
   include: "{{ ansible_distribution | lower }}/00-main.yml"
@@ -25,3 +17,10 @@
 - name: "{{ ansible_distribution }} Telegraf Setup"
   include: "{{ ansible_distribution | lower }}/T1-telegraf-setup.yml"
   when: telegraf is defined
+
+## Setup Timezone
+- name: "Configure timezone"
+  timezone:
+    hwclock: UTC
+    name: "{{ timezone }}"
+  when: timezone is defined

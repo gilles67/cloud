@@ -25,3 +25,4 @@ ubuntu_pkg_security:
   - policycoreutils
   - selinux-utils
   - selinux-basics
+  - tzdata
