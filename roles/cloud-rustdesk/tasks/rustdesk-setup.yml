@@ -1,0 +1,97 @@
+---
+- name: "Firewall Rustdesk outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ item }}"
+    dest: "::/0"
+  loop: 
+    - "{{ features.rustdesk.hbbs.ipv6 }}"
+    - "{{ features.rustdesk.hbbr.ipv6 }}"
+
+- name: "Firewall Rustdesk hbbs (tcp) inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.rustdesk.hbbs.ipv6 }}"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "21115"
+    - "21116"
+    - "21118"
+
+- name: "Firewall Rustdesk hbbs (udp) inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.rustdesk.hbbs.ipv6 }}"
+    proto: "udp"
+    port: "{{ item }}"
+  loop: 
+    - "21116"
+
+- name: "Firewall Rustdesk hbbr (tcp) inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.rustdesk.hbbr.ipv6 }}"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "21117"
+    - "21119"
+
+- name: "Create Rustdesk volume"
+  docker_volume:
+    name: "rustdesk_config"
+    state: present
+
+
+- name: "Create Rustdesk (hbbs) container"
+  docker_container:
+    name: "rustdesk.hbbs"
+    state: present
+    restart_policy: unless-stopped
+    image: "rustdesk/rustdesk-server:latest"
+    volumes:
+      - "rustdesk_config:/root"
+    env:
+      TZ: "{{ timezone }}"
+    command: 
+      - "hbbs"
+      - "-r {{ features.rustdesk.hbbr.hostname }}:21117"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.rustdesk.network }}"
+        ipv6_address: "{{ features.rustdesk.hbbs.ipv6 }}"
+
+- name: "Create Rustdesk (hbbr) container"
+  docker_container:
+    name: "rustdesk.hbbr"
+    state: present
+    restart_policy: unless-stopped
+    image: "rustdesk/rustdesk-server:latest"
+    volumes:
+      - "rustdesk_config:/root"
+    env:
+      TZ: "{{ timezone }}"
+    command: 
+      - "hbbr"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.rustdesk.network }}"
+        ipv6_address: "{{ features.rustdesk.hbbr.ipv6 }}"
+
+- name: "Start Rustdesk (hbbr) container"
+  docker_container:
+    name: "rustdesk.hbbr"
+    state: started
+
+- name: "Start Rustdesk (hbbs) container"
+  docker_container:
+    name: "rustdesk.hbbs"
+    state: started

@@ -1,0 +1,5 @@
+---
+- name: "Rustdesk Server setup"
+  include: "rustdesk-setup.yml"
+  when: 
+    - features.rustdesk is defined
