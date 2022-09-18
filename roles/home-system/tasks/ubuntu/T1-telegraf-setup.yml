@@ -42,6 +42,20 @@
   notify:
     - restart_telegraf
 
+
+# Generate upsc interface
+- name: Generate sudoer file for fail2ban
+  template:
+    src: telegraf/telegraf_upsc.py.j2
+    dest: "/opt/telegraf_upsc.py"
+    owner: root
+    group: root  
+    mode: '0755'
+  notify:
+    - restart_telegraf
+  when: 
+    - ups is defined
+
 # Add telegraf to Docker group
 - name: Add telegraf to Docker group
   user:

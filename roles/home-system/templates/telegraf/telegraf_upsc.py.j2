@@ -1,0 +1,20 @@
+import subprocess,sys
+
+cmd="upsc eaton@localhost > /dev/stdout 2> /dev/null"
+p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
+fields = ['battery.charge', 'battery.charge.low', 'battery.runtime', 'input.frequency', 'input.voltage', 'output.frequency', 'output.voltage',  'ups.load',  'ups.status', 'ups.power.nominal']
+
+output = "ups "
+mesurment = []
+for line in p.stdout.readlines():
+    x = line.decode("utf-8").rstrip().split(": ")
+    if x[0] in fields:
+        try:
+            val = float(x[1])
+            mesurment.append("{0}={1}".format(x[0], x[1]))
+        except ValueError:
+            mesurment.append("{0}=\"{1}\"".format(x[0], x[1]))
+output += ','.join(mesurment)
+
+print(output)

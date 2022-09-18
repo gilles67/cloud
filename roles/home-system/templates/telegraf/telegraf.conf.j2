@@ -57,3 +57,10 @@
 {% endif %}
 
 [[inputs.temp]]
+
+{% if ups is defined %}
+[[inputs.exec]]
+   commands = ["/usr/bin/python3 /opt/telegraf_upsc.py"]
+   timeout = "5s"
+   data_format = "influx"
+{% endif %}
