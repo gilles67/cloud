@@ -1,0 +1,45 @@
+---
+- name: "[Budibase] Create MinIO volume"
+  docker_volume:
+    name: "{{ features.budibase.name | default('budibase') }}_minio_data"
+    state: present
+
+- name: "[Budibase] Create MinIO container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.minio"
+    state: present
+    restart_policy: unless-stopped
+    image: "minio/minio"
+    volumes:
+      - "{{ features.budibase.name | default('budibase') }}_minio_data:/data"
+    env:
+      TZ: "{{ timezone }}"
+      MINIO_ACCESS_KEY: "{{ features.budibase.minio.access_key }}"
+      MINIO_SECRET_KEY: "{{ features.budibase.minio.secret_key }}"
+      MINIO_BROWSER: "off"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.budibase.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.budibaseminio-ssl.rule: "Host(`{{ features.budibase.worker.hostname }}`)  && PathPrefix( `/` )"
+      traefik.http.routers.budibaseminio-ssl.priority: "1"
+      traefik.http.routers.budibaseminio-ssl.entrypoints: "websecure"
+      traefik.http.routers.budibaseminio-ssl.middlewares: "hsts@file,httpsredirect@file,budibasemw@file"
+      traefik.http.routers.budibaseminio-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.budibaseminio-ssl.tls.options: "intermediate@file"
+      traefik.http.services.budibaseminio-ssl.loadbalancer.server.port: "9000"
+    command: 
+      - "server"
+      - "/data"
+      - "--console-address \":9001\""
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.budibase.network }}"
+        ipv6_address: "{{ features.budibase.minio.ipv6 }}"
+
+- name: "[Budibase] Start MinIO container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.minio"
+    state: started

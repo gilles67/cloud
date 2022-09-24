@@ -1,0 +1,119 @@
+---
+- name: "[Budibase] Add dns record for Budibase"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "CNAME"
+    record: "{{ features.budibase.worker.hostname }}."
+    value: "{{ features.budibase.proxy.hostname }}."
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.budibase.proxy.hostname is defined
+    - features.budibase.worker.hostname is defined
+
+
+- name: "[Budibase] Create Budibase worker container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.worker"
+    state: present
+    restart_policy: unless-stopped
+    image: "budibase.docker.scarf.sh/budibase/worker"
+    env:
+      TZ: "{{ timezone }}"
+      SELF_HOSTED: "1"
+      PORT: "4003"
+      CLUSTER_PORT: "10000"
+      JWT_SECRET: "{{ features.budibase.jwt_secret }}"
+      MINIO_ACCESS_KEY: "{{ features.budibase.minio.access_key }}"
+      MINIO_SECRET_KEY: "{{ features.budibase.minio.secret_key }}"
+      MINIO_URL: "http://{{ features.budibase.name | default('budibase') }}.minio:9000"
+      APPS_URL: "http://{{ features.budibase.name | default('budibase') }}.apps:4002"
+      COUCH_DB_USERNAME: "{{ features.budibase.couchdb.username }}"
+      COUCH_DB_PASSWORD: "{{ features.budibase.couchdb.password }}"
+      COUCH_DB_URL: "http://{{ features.budibase.couchdb.username }}:{{ features.budibase.couchdb.password }}@{{ features.budibase.name | default('budibase') }}.couchdb:5984"
+      SENTRY_DSN: "https://a34ae347621946bf8acded18e5b7d4b8@o420233.ingest.sentry.io/5338131"
+      INTERNAL_API_KEY: "{{ features.budibase.api_key }}"
+      REDIS_URL: "{{ features.budibase.name | default('budibase') }}.redis:6379"
+      REDIS_PASSWORD: "{{ features.budibase.redis.password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.budibase.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.budibasework.rule: "Host(`{{ features.budibase.worker.hostname }}`)"
+      traefik.http.routers.budibasework.entrypoints: "web"
+      traefik.http.routers.budibasework.middlewares: "httpsredirect@file"
+      traefik.http.routers.budibasework-ssl.rule: "Host(`{{ features.budibase.worker.hostname }}`)  && PathPrefix( `/api/system/`, `/api/admin/`, `/api/global/`, `/worker/` )"
+      traefik.http.routers.budibasework-ssl.priority: "3"
+      traefik.http.routers.budibasework-ssl.entrypoints: "websecure"
+      traefik.http.routers.budibasework-ssl.middlewares: "hsts@file,httpsredirect@file,budibasemw@file,budibaseworkermw@file"
+      traefik.http.routers.budibasework-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.budibasework-ssl.tls.options: "intermediate@file"
+      traefik.http.services.budibasework-ssl.loadbalancer.server.port: "4003"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.budibase.network }}"
+        ipv6_address: "{{ features.budibase.worker.ipv6 }}"
+
+
+- name: "[Budibase] Start Budibase worker container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.worker"
+    state: started
+
+- name: "[Budibase] Create Budibase apps container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.apps"
+    state: present
+    restart_policy: unless-stopped
+    image: "budibase.docker.scarf.sh/budibase/apps"
+    env:
+      TZ: "{{ timezone }}"
+      SELF_HOSTED: "1"
+      PORT: "4002"
+      JWT_SECRET: "{{ features.budibase.jwt_secret }}"
+      WORKER_URL: "http://{{ features.budibase.name | default('budibase') }}.worker:4003"
+      MINIO_ACCESS_KEY: "{{ features.budibase.minio.access_key }}"
+      MINIO_SECRET_KEY: "{{ features.budibase.minio.secret_key }}"
+      MINIO_URL: "http://{{ features.budibase.name | default('budibase') }}.minio:9000"
+      BUDIBASE_ENVIRONMENT: "PRODUCTION"
+      COUCH_DB_URL: "http://{{ features.budibase.couchdb.username }}:{{ features.budibase.couchdb.password }}@{{ features.budibase.name | default('budibase') }}.couchdb:5984"
+      SENTRY_DSN: "https://a34ae347621946bf8acded18e5b7d4b8@o420233.ingest.sentry.io/5338131"
+      INTERNAL_API_KEY: "{{ features.budibase.api_key }}"
+      REDIS_URL: "{{ features.budibase.name | default('budibase') }}.redis:6379"
+      REDIS_PASSWORD: "{{ features.budibase.redis.password }}"
+      LOG_LEVEL: "info"
+      ENABLE_ANALYTICS: "true"
+      BB_ADMIN_USER_EMAIL: "{{ features.budibase.apps.admin.email }}"
+      BB_ADMIN_USER_PASSWORD: "{{ features.budibase.apps.admin.password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.budibase.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.budibaseapp-ssl.rule: "Host(`{{ features.budibase.worker.hostname }}`)  && PathPrefix( `/app`, `/{build:(builder|app_)}`, `/api/`, `/api/webhooks/`, `/socket/` ) || Path( `/` )"
+      traefik.http.routers.budibaseapp-ssl.priority: "3"
+      traefik.http.routers.budibaseapp-ssl.entrypoints: "websecure"
+      traefik.http.routers.budibaseapp-ssl.middlewares: "hsts@file,httpsredirect@file,budibasemw@file"
+      traefik.http.routers.budibaseapp-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.budibaseapp-ssl.tls.options: "intermediate@file"
+      traefik.http.services.budibaseapp-ssl.loadbalancer.server.port: "4002"
+
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.budibase.network }}"
+        ipv6_address: "{{ features.budibase.apps.ipv6 }}"
+
+
+- name: "[Budibase] Start Budibase apps container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.apps"
+    state: started
+

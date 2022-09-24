@@ -1,0 +1,55 @@
+---
+- name: "[Budibase] Create CouchDB volume"
+  docker_volume:
+    name: "{{ features.budibase.name | default('budibase') }}_couchdb_data"
+    state: present
+
+- name: "[Budibase] Create CouchDB container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.couchdb"
+    state: present
+    restart_policy: unless-stopped
+    image: "couchdb:{{ couchdb_version }}"
+    volumes:
+      - "{{ features.budibase.name | default('budibase') }}_couchdb_data:/opt/couchdb/data"
+    env:
+      TZ: "{{ timezone }}"
+      COUCHDB_USER: "{{ features.budibase.couchdb.username }}"
+      COUCHDB_PASSWORD: "{{ features.budibase.couchdb.password }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.budibase.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.budibasedb-ssl.rule: "Host(`{{ features.budibase.worker.hostname }}`)  && PathPrefix( `/db/` )"
+      traefik.http.routers.budibasedb-ssl.priority: "2"
+      traefik.http.routers.budibasedb-ssl.entrypoints: "websecure"
+      traefik.http.routers.budibasedb-ssl.middlewares: "hsts@file,httpsredirect@file,budibasemw@file,budibasedbmw@file"
+      traefik.http.routers.budibasedb-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.budibasedb-ssl.tls.options: "intermediate@file"
+      traefik.http.services.budibasedb-ssl.loadbalancer.server.port: "5984"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.budibase.network }}"
+        ipv6_address: "{{ features.budibase.couchdb.ipv6 }}"
+
+- name: "[Budibase] Start CouchDB container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.couchdb"
+    state: started
+
+- name: "[Budibase] Init CouchDB users table"
+  shell: "docker exec {{ features.budibase.name | default('budibase') }}.couchdb sh -c \"sleep 20 ; curl -u \\${COUCHDB_USER}:\\${COUCHDB_PASSWORD} -X PUT localhost:5984/_users\""
+  failed_when: no
+  changed_when: no
+
+- name: "[Budibase] Init CouchDB replicator table"
+  shell: "docker exec {{ features.budibase.name | default('budibase') }}.couchdb sh -c \"curl -u \\${COUCHDB_USER}:\\${COUCHDB_PASSWORD} -X PUT localhost:5984/_replicator\""
+  failed_when: no
+  changed_when: no
+
+- name: "[Budibase] Init CouchDB global_changes table"
+  shell: "docker exec {{ features.budibase.name | default('budibase') }}.couchdb sh -c \"curl -u \\${COUCHDB_USER}:\\${COUCHDB_PASSWORD} -X PUT localhost:5984/_global_changes\""
+  failed_when: no
+  changed_when: no

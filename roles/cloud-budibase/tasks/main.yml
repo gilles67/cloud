@@ -1,0 +1,26 @@
+---
+- name: "[Budibase] Redis Setup"
+  include: "redis-setup.yml"
+  when: 
+    - features.budibase is defined
+    - features.budibase.redis is defined
+
+- name: "[Budibase] Couchdb Setup"
+  include: "couchdb-setup.yml"
+  when: 
+    - features.budibase is defined
+    - features.budibase.couchdb is defined
+
+- name: "[Budibase] Couchdb Setup"
+  include: "minio-setup.yml"
+  when: 
+    - features.budibase is defined
+    - features.budibase.minio is defined
+
+- name: "[Budibase] Budibase Setup"
+  include: "budibase-setup.yml"
+  when: 
+    - features.budibase is defined
+    - features.budibase.redis is defined
+    - features.budibase.couchdb is defined
+    - features.budibase.minio is defined

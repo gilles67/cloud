@@ -1,0 +1,30 @@
+---
+- name: "[Budibase] Create Redis volume"
+  docker_volume:
+    name: "{{ features.budibase.name | default('budibase') }}_redis_data"
+    state: present
+
+- name: "[Budibase] Create Redis container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.redis"
+    state: present
+    restart_policy: unless-stopped
+    image: "redis:{{ redis_version }}"
+    volumes:
+      - "{{ features.budibase.name | default('budibase') }}_redis_data:/data"
+    env:
+      TZ: "{{ timezone }}"
+    command: 
+      - "redis-server"
+      - "--requirepass {{ features.budibase.redis.password }}"
+      - "--save 60 1"
+      - "--loglevel warning"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.budibase.network }}"
+        ipv6_address: "{{ features.budibase.redis.ipv6 }}"
+
+- name: "[Budibase] Start Redis container"
+  docker_container:
+    name: "{{ features.budibase.name | default('budibase') }}.redis"
+    state: started
