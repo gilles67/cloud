@@ -16,6 +16,7 @@
   loop: 
     - "80"
     - "443"
+    - "9001"
 
 - name: "Create Jellyfin volumes"
   docker_volume:
