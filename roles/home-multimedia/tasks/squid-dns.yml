@@ -1,0 +1,17 @@
+---
+- name: "Add dns record for Squid"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "AAAA"
+    record: "{{ features.multimedia.squid.hostname }}."
+    value: "{{ features.multimedia.squid.ipv6 }}"
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.multimedia.squid.hostname is defined
+    - features.multimedia.squid.ipv6 is defined

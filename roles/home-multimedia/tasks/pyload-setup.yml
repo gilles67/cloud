@@ -14,6 +14,16 @@
     - "80"
     - "443"
 
+# - name: "Firewall Pyload outbound (dns)"
+#   ufw:
+#     rule: allow
+#     route: yes
+#     src: "{{ features.multimedia.pyload.ipv6 }}"
+#     dest: "{{ item }}"
+#     proto: "udp"
+#     port: "53"
+#   loop: "{{ features.multimedia.pyload.dns_servers }}"
+
 - name: "Create Pyload volumes"
   docker_volume:
     name: "pyload_{{ item }}"
@@ -55,6 +65,8 @@
     networks:
       - name: "{{ features.multimedia.network }}"
         ipv6_address: "{{ features.multimedia.pyload.ipv6 }}"
+        ipv4_address: "{{ features.multimedia.pyload.ipv4 }}"
+    dns_servers: "{{ features.multimedia.pyload.dns_servers }}"
 
 - name: "Start Pyload container"
   docker_container:

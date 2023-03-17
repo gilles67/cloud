@@ -1,0 +1,91 @@
+---
+- name: "Squid DNS Registration"
+  include: "squid-dns.yml"
+
+- name: "Firewall Squid inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.multimedia.squid.ipv6 }}"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "3128"
+
+- name: "Firewall Squid outbound IPv6"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.squid.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+
+- name: "Firewall Squid outbound IPv4"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.squid.ipv4 }}"
+    dest: "0.0.0.0/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+
+- name: "Create Squid configuration folder"
+  file:
+    path: "/opt/home/multimedia/squid/"
+    state: directory
+    recurse: yes
+
+- name: "Generate Squid configuration file"
+  template:
+    src: "squid.conf.j2"
+    dest: "/opt/home/multimedia/squid/squid.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Create Squid volumes"
+  docker_volume:
+    name: "squid_{{ item }}"
+    state: present
+  loop:
+    - "log"
+    - "cache"
+
+- name: "Create Squid container"
+  docker_container:
+    name: "multimedia.squid"
+    state: present
+    restart_policy: unless-stopped
+    image: "ubuntu/squid:{{ squid_version }}"
+    volumes:
+      - "squid_log:/var/log/squid"
+      - "squid_cache:/var/spool/squid"
+      - "/opt/home/multimedia/squid/squid.conf:/etc/squid/squid.conf"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "volume"
+      one.h42.backup.volume.ignore: "{{ features.multimedia.media }}"
+      docker.network: "{{ features.multimedia.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.multimedia.network }}"
+        ipv6_address: "{{ features.multimedia.squid.ipv6 }}"
+        ipv4_address: "{{ features.multimedia.squid.ipv4 }}"
+    dns_servers: "{{ features.multimedia.squid.dns_servers }}"
+
+- name: "Start Squid container"
+  docker_container:
+    name: "multimedia.squid"
+    state: started

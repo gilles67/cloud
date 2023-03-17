@@ -16,3 +16,9 @@
   when: 
     - features.multimedia is defined
     - features.multimedia.pyload is defined
+
+- name: "Squid setup"
+  include: "squid-setup.yml"
+  when: 
+    - features.multimedia is defined
+    - features.multimedia.squid is defined
