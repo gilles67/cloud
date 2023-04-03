@@ -130,3 +130,5 @@ dmypy.json
 
 inventory.yml
 ansible.cfg
+
+roles/kwoodson.yedit
