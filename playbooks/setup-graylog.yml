@@ -1,0 +1,6 @@
+---
+- hosts: all
+  roles:
+    - cloud-docker
+    - asset-proxy
+    - cloud-graylog
