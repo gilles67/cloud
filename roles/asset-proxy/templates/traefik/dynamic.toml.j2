@@ -36,7 +36,7 @@ replacement = "https://${1}/remote.php/dav/"
 
 [http.middlewares.onlyofficehead]
 [http.middlewares.onlyofficehead.headers]
-accessControlAllowOrigin = "*"
+accessControlAllowOriginList = "*"
 [http.middlewares.onlyofficehead.headers.customrequestheaders]
 X-Forwarded-Proto = "https"
 {% endif %}
