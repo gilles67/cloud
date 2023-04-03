@@ -1,13 +1,19 @@
 ---
 # Install telegraf repo key
 - name: Install Telegraf repository key
-  apt_key:
-    url: https://repos.influxdata.com/influxdb.key
+  # apt_key:
+  #   url: https://repos.influxdata.com/influxdb.key
+  get_url:
+    url: https://repos.influxdata.com/influxdata-archive.key
+    dest: /usr/share/keyrings/influxdata.key
+    mode: 0644
+    force: true
 
 # Install telegraf repo
 - name: Install Telegraf repository
   apt_repository:
-    repo: "deb https://repos.influxdata.com/{{ ansible_distribution | lower }} {{ ansible_distribution_release | lower }} stable"
+    repo: "deb [signed-by=/usr/share/keyrings/influxdata.key]  https://repos.influxdata.com/{{ ansible_distribution | lower }} {{ ansible_distribution_release | lower }} stable"
+    filename: influxdata
     state: present
 
 # Install telegraf packages
@@ -68,13 +74,13 @@
     - restart_telegraf
 
 # Add capability for Wireguard 
-- name: Add capability for Wireguard 
-  capabilities:
-    path: /usr/bin/telegraf
-    capability: CAP_NET_ADMIN+epi
-    state: present
-  when:
-    - wireguard is defined
-  notify:
-    - restart_telegraf
+# - name: Add capability for Wireguard 
+#   capabilities:
+#     path: /usr/bin/telegraf
+#     capability: CAP_NET_ADMIN+epi
+#     state: present
+#   when:
+#     - wireguard is defined
+#   notify:
+#     - restart_telegraf
 

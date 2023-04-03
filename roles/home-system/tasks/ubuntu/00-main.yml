@@ -14,3 +14,8 @@
 - name: "{{ ansible_distribution }} Security Setup"
   include: "{{ ansible_distribution | lower }}/03-security-setup.yml"
 
+# Step 4 : UPS
+- name: "{{ ansible_distribution }} UPS Setup"
+  include: "{{ ansible_distribution | lower }}/04-ups.yml"
+  when:
+    - ups is defined
