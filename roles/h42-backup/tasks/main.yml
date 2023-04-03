@@ -1,0 +1,12 @@
+---
+- name: "H42backup Setup"
+  include: "h42backup-agent.yml"
+  when:     
+    - backup is defined
+    - backup.borg is defined
+
+
+- name: "H42backup Server Setup"
+  include: "h42backup-server.yml"
+  when:     
+    - features.backup is defined

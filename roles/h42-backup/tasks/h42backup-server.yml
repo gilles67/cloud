@@ -1,0 +1,64 @@
+---
+- name: "Add dns record for backup domain"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "AAAA"
+    record: "{{ features.backup.hostname }}."
+    value: "{{ features.backup.ipv6 }}"
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.backup.hostname is defined
+    - features.backup.ipv6 is defined
+
+- name: "Firewall backup server inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.backup.ipv6 }}"
+    proto: "tcp"
+    port: "22"
+
+- name: "Create Backup folder"
+  file:
+    path: "/opt/cloud/backup/"
+    state: directory
+    recurse: yes
+
+- name: "Create backup profiles list"
+  template:
+    src: authorized_keys.j2
+    dest: "/opt/cloud/backup/authorized_keys"
+    owner: 5000
+    group: nogroup
+    mode: '0644'
+
+- name: Create backup server container
+  docker_container:
+    name: "h42.backup-server"
+    state: present
+    restart_policy: unless-stopped
+    image: "h42-backup/server"
+    volumes:
+      - "{{ features.backup.storage }}:/backup"
+      - "/opt/cloud/backup/authorized_keys:/home/borg/.ssh/authorized_keys"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.backup.enable: "false"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{  features.backup.network }}"
+        ipv6_address: "{{ features.backup.ipv6 }}"
+        ipv4_address: "{{ features.backup.ipv4 | default(None) }}"
+
+- name: Start backup server container
+  docker_container:
+    name: "h42.backup-server"
+    state: started

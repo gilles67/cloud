@@ -1,0 +1,3 @@
+{% for profile in features.backup.profiles %}
+command="borg serve --restrict-to-repository /backup/{{ profile.name }}/repository",restrict {{  profile.key }}
+{% endfor %}
