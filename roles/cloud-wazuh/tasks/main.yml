@@ -1,4 +1,12 @@
 ---
+
+- name: "Setup Wazuh Certificate"
+  include: "setup-wazuh-certificate.yml"
+  when:     
+    - features is defined
+    - features.wazuh is defined
+
+
 - name: "Setup Wazuh"
   include: "setup-wazuh.yml"
   when:     

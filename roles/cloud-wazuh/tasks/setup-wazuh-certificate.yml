@@ -1,0 +1,31 @@
+---
+- name: "[Wazuh] Create Wazuh Folder"
+  file:
+    path: "/opt/cloud/wazuh/{{ item }}"
+    state: directory
+    recurse: yes
+  loop:
+    - "certificates"
+    - "configurations"
+
+- name: "[Wazuh] Generate Certificate Configuration"
+  template:
+    src: "certificates/certs.yml.j2"
+    dest: "/opt/cloud/wazuh/configurations/certs.yml"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "[Wazuh] Create Wazuh certificates volume"
+  docker_volume:
+    name: "wazuh_certificates"
+    state: absent
+
+- name: "[Wazuh] Generate Wazuh certificates" 
+  docker_container:
+    name: "wazuh.certificate"
+    state: present
+    image: "wazuh/wazuh-certs-generator:{{ wazuh_certs_version }}"
+    volumes:
+      - "/opt/cloud/wazuh/certificates:/certificates/"
+      - "/opt/cloud/wazuh/configurations/certs.yml:/config/certs.yml:ro"

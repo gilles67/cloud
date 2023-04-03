@@ -1,4 +1,4 @@
 ---
-od_elk_version: "1.13.3"
-od_kibana_version: "1.13.2"
+wazuh_version: "4.3.8"
+wazuh_certs_version: "0.0.1"
 

@@ -1,0 +1,190 @@
+---
+- name: "[Wazuh] Create Wazuh configuration folder"
+  file:
+    path: "/opt/cloud/wazuh/configurations/{{ item }}"
+    state: directory
+    recurse: yes
+  loop:
+    - "cluster"
+    - "indexer"
+    - "dashboard"
+
+- name: "[Wazuh] Create Wazuh volumes"
+  docker_volume:
+    name: "wazuh_{{ item }}"
+    state: present
+  loop:
+    - "api_configuration"
+    - "etc"
+    - "logs"
+    - "queue"
+    - "var_multigroups"
+    - "integrations"
+    - "active_response"
+    - "agentless"
+    - "wodles"
+    - "filebeat_etc"
+    - "filebeat_var"
+    - "indexer_data"
+
+- name: "[Wazuh] Generate Wazuh manager configuration"
+  template:
+    src: "cluster/wazuh_manager.conf.j2"
+    dest: "/opt/cloud/wazuh/configurations/cluster/wazuh_manager.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "[Wazuh] Create Wazuh manager container"
+  docker_container:
+    name: "wazuh.manager"
+    state: present
+    restart_policy: unless-stopped
+    image: "wazuh/wazuh-manager:{{ wazuh_version }}"
+    volumes:
+      - "wazuh_api_configuration:/var/ossec/api/configuration"
+      - "wazuh_etc:/var/ossec/etc"
+      - "wazuh_logs:/var/ossec/logs"
+      - "wazuh_queue:/var/ossec/queue"
+      - "wazuh_var_multigroups:/var/ossec/var/multigroups"
+      - "wazuh_integrations:/var/ossec/integrations"
+      - "wazuh_active_response:/var/ossec/active-response/bin"
+      - "wazuh_agentless:/var/ossec/agentless"
+      - "wazuh_wodles:/var/ossec/wodles"
+      - "wazuh_filebeat_etc:/etc/filebeat"
+      - "wazuh_filebeat_var:/var/lib/filebeat"
+      - "/opt/cloud/wazuh/configurations/cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf"
+      - "/opt/cloud/wazuh/certificates/root-ca-manager.pem:/etc/ssl/root-ca.pem"
+      - "/opt/cloud/wazuh/certificates/wazuh.manager.pem:/etc/ssl/filebeat.pem"
+      - "/opt/cloud/wazuh/certificates/wazuh.manager-key.pem:/etc/ssl/filebeat.key"
+    env:
+      TZ: "{{ timezone }}"
+      INDEXER_URL: "https://wazuh.indexer:9200"
+      INDEXER_USERNAME: "admin"
+      INDEXER_PASSWORD: "SecretPassword"
+      FILEBEAT_SSL_VERIFICATION_MODE: "full"
+      SSL_CERTIFICATE_AUTHORITIES: "/etc/ssl/root-ca.pem"
+      SSL_CERTIFICATE: "/etc/ssl/filebeat.pem"
+      SSL_KEY: "/etc/ssl/filebeat.key"
+      API_USERNAME: "wazuh-wui"
+      API_PASSWORD: "MyS3cr37P450r.*-"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.wazuh.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.wazuh.network }}"
+        ipv6_address: "{{ features.wazuh.manager.ipv6 }}"
+
+- name: "[Wazuh] Start Wazuh manager container"
+  docker_container:
+    name: "wazuh.manager"
+    state: started
+
+
+
+
+- name: "[Wazuh] Generate Wazuh indexer configuration"
+  template:
+    src: "indexer/{{ item }}.j2"
+    dest: "/opt/cloud/wazuh/configurations/indexer/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - "wazuh.indexer.yml"
+    - "internal_users.yml"
+
+- name: "[Wazuh] Create Wazuh indexer container"
+  docker_container:
+    name: "wazuh.indexer"
+    state: present
+    restart_policy: unless-stopped
+    image: "wazuh/wazuh-indexer:{{ wazuh_version }}"
+    volumes:
+      - "wazuh_indexer_data:/var/lib/wazuh-indexer"
+      - "/opt/cloud/wazuh/configurations/indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/config/opensearch.yml"
+      - "/opt/cloud/wazuh/configurations/indexer/internal_users.yml:/usr/share/wazuh-indexer/plugins/opensearch-security/securityconfig/internal_users.yml"
+      - "/opt/cloud/wazuh/certificates/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem"
+      - "/opt/cloud/wazuh/certificates/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.key"
+      - "/opt/cloud/wazuh/certificates/wazuh.indexer.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem"
+      - "/opt/cloud/wazuh/certificates/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem"
+      - "/opt/cloud/wazuh/certificates/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem"
+    env:
+      TZ: "{{ timezone }}"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.wazuh.network }}"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.wazuh.network }}"
+        ipv6_address: "{{ features.wazuh.indexer.ipv6 }}"
+
+- name: "[Wazuh] Start Wazuh indexer container"
+  docker_container:
+    name: "wazuh.indexer"
+    state: started
+
+
+
+
+- name: "[Wazuh] Generate Wazuh dashboard configuration"
+  template:
+    src: "dashboard/{{ item }}.j2"
+    dest: "/opt/cloud/wazuh/configurations/dashboard/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - "opensearch_dashboards.yml"
+    - "wazuh.yml"
+
+- name: "[Wazuh] Create Wazuh dashboard container"
+  docker_container:
+    name: "wazuh.dashboard"
+    state: present
+    restart_policy: unless-stopped
+    image: "wazuh/wazuh-dashboard:{{ wazuh_version }}"
+    volumes:
+      - "/opt/cloud/wazuh/configurations/dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml"
+      - "/opt/cloud/wazuh/configurations/dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml"
+      - "/opt/cloud/wazuh/certificates/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem"
+      - "/opt/cloud/wazuh/certificates/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem"
+      - "/opt/cloud/wazuh/certificates/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem"
+    env:
+      TZ: "{{ timezone }}"
+      INDEXER_USERNAME: "admin"
+      INDEXER_PASSWORD: "SecretPassword"
+      WAZUH_API_URL: "https://wazuh.manager"
+      API_USERNAME: "wazuh-wui"
+      API_PASSWORD: "MyS3cr37P450r.*-"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.wazuh.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.wazuhdashboard.rule: "Host(`{{ features.wazuh.dashboard.hostname }}`)"
+      traefik.http.routers.wazuhdashboard.entrypoints: "web"
+      traefik.http.routers.wazuhdashboard.middlewares: "httpsredirect@file"
+      traefik.http.routers.wazuhdashboard-ssl.rule: "Host(`{{ features.wazuh.dashboard.hostname }}`)"
+      traefik.http.routers.wazuhdashboard-ssl.entrypoints: "websecure"
+      traefik.http.routers.wazuhdashboard-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.wazuhdashboard-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.wazuhdashboard-ssl.tls.options: "intermediate@file"
+      traefik.http.services.wazuhdashboard-ssl.loadbalancer.server.port: "5601"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.wazuh.network }}"
+        ipv6_address: "{{ features.wazuh.dashboard.ipv6 }}"
+
+
+- name: "[Wazuh] Start Wazuh dashboard container"
+  docker_container:
+    name: "wazuh.dashboard"
+    state: started
