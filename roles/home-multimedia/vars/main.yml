@@ -8,3 +8,4 @@ plex_hw_packages:
   - vainfo
 
 squid_version: 5.2-22.04_edge
+pyload_version: 0.5.0

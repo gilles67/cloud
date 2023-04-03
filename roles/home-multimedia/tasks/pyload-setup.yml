@@ -36,7 +36,7 @@
     name: "multimedia.pyload"
     state: present
     restart_policy: unless-stopped
-    image: "linuxserver/pyload"
+    image: "linuxserver/pyload-ng:{{ pyload_version }}"
     volumes:
       - "pyload_config:/config"
       - "{{ features.multimedia.media }}/cache/downloads:/downloads"
