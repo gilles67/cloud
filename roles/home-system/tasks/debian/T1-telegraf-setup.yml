@@ -2,12 +2,18 @@
 # Install telegraf repo key
 - name: Install Telegraf repository key
   apt_key:
-    url: https://repos.influxdata.com/influxdb.key
+    url: https://repos.influxdata.com/influxdata-archive.key
+  # get_url:
+  #   url: https://repos.influxdata.com/influxdata-archive.key
+  #   dest: /usr/share/keyrings/influxdata.key
+  #   mode: 0644
+  #   force: true
 
 # Install telegraf repo
 - name: Install Telegraf repository
   apt_repository:
     repo: "deb https://repos.influxdata.com/{{ ansible_distribution | lower }} {{ ansible_distribution_release | lower }} stable"
+    filename: influxdata
     state: present
 
 # Install telegraf packages

@@ -1,0 +1,6 @@
+---
+- name: "Mosquitto broker"
+  include: "mosquitto-setup.yml"
+  when: 
+    - features.ledleaf is defined
+    - features.ledleaf.mosquitto is defined

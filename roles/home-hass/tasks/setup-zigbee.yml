@@ -16,6 +16,18 @@
     - features.hass.proxy.hostname is defined
     - features.hass.adapter.zigbee.hostname is defined
 
+- name: "Firewall Zigbee2MQTT outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.hass.adapter.zigbee.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+
 - name: "Create Zigbee2MQTT data volume"
   docker_volume:
     name: "hass_zigbee_data"
@@ -40,7 +52,7 @@
       - "{{ features.hass.adapter.zigbee.device }}"
     env:
       TZ: "{{ timezone }}"
-      DEBUG: "zigbee-herdsman*"
+      # DEBUG: "zigbee-herdsman*"
     labels:
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
@@ -68,8 +80,3 @@
     name: "hass.zigbee"
     state: started
 
-- name: "Zigbee2MQTTAssistant"
-  include: "zigbee-zigbee2mqttassistant.yml"
-  when: 
-    - features.hass.adapter.zigbee.admin_ipv6
-    - features.hass.adapter.zigbee.admin_hostname

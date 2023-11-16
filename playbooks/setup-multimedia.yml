@@ -2,7 +2,6 @@
 - hosts: all
   roles:
     - asset-proxy
-    - asset-database
     - asset-auth
     - asset-samba
     - home-multimedia

@@ -44,7 +44,7 @@
     name: "h42.backup-server"
     state: present
     restart_policy: unless-stopped
-    image: "h42-backup/server"
+    image: "gilles67/h42-backup-server:{{ h42_backup_version }}"
     volumes:
       - "{{ features.backup.storage }}:/backup"
       - "/opt/cloud/backup/authorized_keys:/home/borg/.ssh/authorized_keys"

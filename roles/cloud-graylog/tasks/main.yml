@@ -1,0 +1,14 @@
+---
+- name: "Setup Mongodb"
+  include: "setup-mongodb.yml"
+  when:     
+    - features is defined
+    - features.gaylog is defined
+    - features.gaylog.mongodb is defined
+
+
+- name: "Setup Graylog"
+  include: "setup-graylog.yml"
+  when:     
+    - features is defined
+    - features.gaylog is defined

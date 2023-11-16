@@ -25,6 +25,17 @@
     - "80"
     - "443"
 
+- name: "Firewall Squid outbound IPv6 (UDP)"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.squid.ipv6 }}"
+    dest: "::/0"
+    proto: "udp"
+    port: "{{ item }}"
+  loop: 
+    - "443"
+
 - name: "Firewall Squid outbound IPv4"
   ufw:
     rule: allow
@@ -36,6 +47,18 @@
   loop: 
     - "80"
     - "443"
+
+- name: "Firewall Squid outbound IPv4 (UDP)"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.squid.ipv4 }}"
+    dest: "0.0.0.0/0"
+    proto: "udp"
+    port: "{{ item }}"
+  loop: 
+    - "443"
+
 
 - name: "Create Squid configuration folder"
   file:

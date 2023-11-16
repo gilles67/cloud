@@ -17,6 +17,24 @@
     group: root
     mode: '0644'
 
+- name: "Add dns record for Eclipse Mosquitto (Websocket Proxy)"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "CNAME"
+    record: "{{ current_item.broker.web_hostname }}."
+    value: "{{ current_item.proxy.hostname }}."
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - current_item.proxy.hostname is defined
+    - current_item.broker.web_hostname is defined
+
+
 - name: "Create Eclipse Mosquitto container"
   docker_container:
     name: "{{ current_item.name | default(fitem) | lower }}.mosquitto"
@@ -31,6 +49,40 @@
     networks:
       - name: "{{ current_item.network }}"
         ipv6_address: "{{ current_item.broker.ipv6 }}"
+  when:
+    current_item.broker.web_hostname is not defined
+
+- name: "Create Eclipse Mosquitto container (Websocket Proxy)"
+  docker_container:
+    name: "{{ current_item.name | default(fitem) | lower }}.mosquitto"
+    state: present
+    restart_policy: unless-stopped
+    image: "eclipse-mosquitto:{{ mosquitto_version }}"
+    volumes:
+      - "/opt/asset/{{ current_item.name | default(fitem) | lower }}/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ current_item.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.broker.rule: "Host(`{{ current_item.broker.web_hostname }}`)"
+      traefik.http.routers.broker.entrypoints: "web"
+      traefik.http.routers.broker.middlewares: "httpsredirect@file"
+      traefik.http.routers.broker-ssl.rule: "Host(`{{ current_item.broker.web_hostname  }}`)"
+      traefik.http.routers.broker-ssl.entrypoints: "websecure"
+      traefik.http.routers.broker-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.broker-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.broker-ssl.tls.options: "intermediate@file"
+      traefik.http.services.broker-ssl.loadbalancer.server.port: "80"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ current_item.network }}"
+        ipv6_address: "{{ current_item.broker.ipv6 }}"
+  when:
+    current_item.broker.web_hostname is defined
+
 
 - name: "Start Eclipse Mosquitto container"
   docker_container:

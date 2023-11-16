@@ -1,0 +1,82 @@
+---
+- name: "Add dns record for Mosquitto"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "AAAA"
+    record: "{{ features.ledleaf.mosquitto.hostname }}."
+    value: "{{ features.ledleaf.mosquitto.ipv6 }}"
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.ledleaf.mosquitto.hostname is defined
+    - features.ledleaf.mosquitto.ipv6 is defined
+
+- name: "Firewall Mosquitto outbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.ledleaf.mosquitto.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+
+- name: "Firewall Mosquitto inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.ledleaf.mosquitto.ipv6 }}"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+    - "8883"
+
+- name: Configuration Mosquitto folder
+  file:
+    path: "/opt/cloud/ledleaf/mosquitto/"
+    state: directory
+    recurse: yes
+
+- name: Generate traefik configuration files
+  template:
+    src: "mosquitto/mosquitto.conf.j2"
+    dest: "/opt/cloud/ledleaf/mosquitto/mosquitto.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Create Mosquitto container"
+  docker_container:
+    name: "ledleaf.mosquitto"
+    state: present
+    restart_policy: unless-stopped
+    image: "iegomez/mosquitto-go-auth:{{ mosquitto_go_auth_version }}"
+    volumes:
+      - "/opt/cloud/ledleaf/mosquitto/:/etc/mosquitto"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.ledleaf.network }}"
+      traefik.enable: "false"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.ledleaf.network }}"
+        ipv6_address: "{{ features.ledleaf.mosquitto.ipv6 }}"
+
+- name: "Start Mosquitto container"
+  docker_container:
+    name: "ledleaf.mosquitto"
+    state: started

@@ -1,5 +1,5 @@
 ---
-#cloud-config
+# cloud-config
 autoinstall:
   version: 1
   keyboard:
@@ -15,11 +15,16 @@ autoinstall:
       - "{{ sshkey }}"
 {% endfor %}
     allow-pw: false
+  reporting:
+    central:
+      type: rsyslog
+      destination: @192.168.1.14
+    builtin:
+      type: print
   storage:
     grub:
       reorder_uefi: false
     config:
-# disk
       - type: disk
         ptable: gpt
         id: disk-root
@@ -27,8 +32,6 @@ autoinstall:
         preserve: false
         match:
           size: largest
-          ssd: yes
-# part /boot/efi (fat32, 512 Mo)
       - type: partition
         id: efi-part
         device: disk-root
@@ -42,7 +45,6 @@ autoinstall:
         id: efi-part-fs
         fstype: fat32
         volume: efi-part
-# part / (ext4, 8 Go)
       - type: partition
         id: root-part
         device: disk-root
@@ -54,7 +56,6 @@ autoinstall:
         id: root-part-fs
         fstype: ext4
         volume: root-part
-# part /var (ext4, 20 Go)
       - type: partition
         id: var-log-part
         device: disk-root
@@ -66,7 +67,6 @@ autoinstall:
         id: var-log-part-fs
         fstype: ext4
         volume: var-log-part
-# part swap (swap, 16 Go)
       - type: partition
         id: swap-part
         device: disk-root
@@ -78,7 +78,6 @@ autoinstall:
         id: swap-part-fs
         fstype: swap
         volume: swap-part
-# part /var/lib (ext4, -1)
       - type: partition
         id: var-lib-part
         device: disk-root
@@ -90,7 +89,6 @@ autoinstall:
         id: var-lib-part-fs
         fstype: ext4
         volume: var-lib-part
-# mount points
       - type: mount
         id: root-part-fs-mount
         path: /

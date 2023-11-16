@@ -1,0 +1,64 @@
+---
+- name: "[Freeradius] Create Freeradius configuration folder"
+  file:
+    path: "/opt/cloud/freeradius/etc/freeradius/"
+    state: directory
+    recurse: yes
+
+- name: "[Freeradius] Firewall Freeradius inbound"
+  ufw:
+    rule: allow
+    route: yes
+    src: "::/0"
+    dest: "{{ features.freeradius.freeradius.ipv6 }}"
+    proto: "udp"
+    port: "{{ item }}"
+  loop: 
+    - "1812"
+    - "1813"
+
+- name: "[Freeradius] Add dns record for Freeradius"
+  nsupdate:
+    key_name: "tsig-{{ nsupdate.zone }}"
+    key_algorithm: "{{ nsupdate.tsig.algorithm | default('hmac-sha256') }}"
+    key_secret: "{{ nsupdate.tsig.secret }}"
+    server: "{{ nsupdate.server }}"
+    zone: "{{ nsupdate.zone }}"
+    type: "AAAA"
+    record: "{{ features.freeradius.freeradius.hostname }}."
+    value: "{{ features.freeradius.freeradius.ipv6 }}"
+  when:
+    - nsupdate.zone is defined
+    - nsupdate.tsig is defined
+    - nsupdate.server is defined
+    - features.freeradius.freeradius.hostname is defined
+    - features.freeradius.freeradius.ipv6 is defined
+
+
+- name: "[Freeradius] Create Freeradius container"
+  docker_container:
+    name: "freeradius.radius"
+    state: present
+    restart_policy: unless-stopped
+    image: "freeradius/freeradius-server:{{ freeradius_version }}"
+    volumes:
+      - "/opt/cloud/freeradius/etc/freeradius/:/etc/freeradius/"
+    env:
+      TZ: "{{ timezone }}"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.freeradius.network }}"
+      traefik.enable: "false"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.freeradius.network }}"
+        ipv6_address: "{{ features.freeradius.freeradius.ipv6 }}"
+    command: "-X -t"
+
+
+- name: "[Freeradius] Start Freeradius container"
+  docker_container:
+    name: "freeradius.radius"
+    state: started

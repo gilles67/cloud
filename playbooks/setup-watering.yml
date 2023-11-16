@@ -2,4 +2,4 @@
 - hosts: all
   roles:
     - asset-proxy
-    - cloud-rustdesk
+    - asset-broker

@@ -1,0 +1,48 @@
+---
+
+- name: "Semaphore DNS"
+  include: "semaphore-dns.yml"
+
+- name: Create Semaphore container
+  docker_container:
+    name: "ansible.semaphore"
+    state: present
+    restart_policy: unless-stopped
+    image: "semaphoreui/semaphore:{{ semaphore_version }}"
+    env:
+      TZ: "{{ timezone }}"
+      SEMAPHORE_DB_USER: "{{ features.ansible.database[features.ansible.semaphore.database_vendor].databases['semaphore'].username }}"
+      SEMAPHORE_DB_PASS: "{{ features.ansible.database[features.ansible.semaphore.database_vendor].databases['semaphore'].password }}"
+      SEMAPHORE_DB_HOST: "ansible.{{ features.ansible.semaphore.database_vendor }}"
+      SEMAPHORE_DB_PORT: "3306"
+      SEMAPHORE_DB_DIALECT: "{{ features.ansible.semaphore.database_dialect }}"
+      SEMAPHORE_DB: "semaphore"
+      SEMAPHORE_PLAYBOOK_PATH: "/tmp/semaphore/"
+      SEMAPHORE_ADMIN_PASSWORD: "{{ features.ansible.semaphore.admin.password }}"
+      SEMAPHORE_ADMIN_NAME: "{{ features.ansible.semaphore.admin.name }}"
+      SEMAPHORE_ADMIN_EMAIL: "{{ features.ansible.semaphore.admin.email }}"
+      SEMAPHORE_ADMIN: "{{ features.ansible.semaphore.admin.username }}"
+      SEMAPHORE_LDAP_ACTIVATED: "no"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      docker.network: "{{ features.ansible.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.semaphore.rule: "Host(`{{ features.ansible.semaphore.hostname }}`)"
+      traefik.http.routers.semaphore.entrypoints: "web"
+      traefik.http.routers.semaphore.middlewares: "httpsredirect@file"
+      traefik.http.routers.semaphore-ssl.rule: "Host(`{{ features.ansible.semaphore.hostname  }}`)"
+      traefik.http.routers.semaphore-ssl.entrypoints: "websecure"
+      traefik.http.routers.semaphore-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.semaphore-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.semaphore-ssl.tls.options: "intermediate@file"
+      traefik.http.services.semaphore-ssl.loadbalancer.server.port: "3000"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.ansible.network }}"
+        ipv6_address: "{{ features.ansible.semaphore.ipv6 }}"
+
+- name: Start Semaphore container
+  docker_container:
+    name: "ansible.semaphore"
+    state: started

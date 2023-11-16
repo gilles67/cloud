@@ -11,4 +11,5 @@ def password_generate(length=64):
     password = ''.join(password)
     return password
 
-print(password_generate())
+print(password_generate(64))
+print(password_generate(128))

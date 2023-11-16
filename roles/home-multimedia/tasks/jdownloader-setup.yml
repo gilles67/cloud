@@ -1,0 +1,79 @@
+---
+- name: "JDownloader DNS Registration"
+  include: "jdownloader-dns.yml"
+
+- name: "Firewall JDownloader outbound v6"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.jdownloader.ipv6 }}"
+    dest: "::/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+  when: 
+    - features.multimedia.jdownloader.ipv6 is defined
+
+- name: "Firewall JDownloader outbound v4"
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ features.multimedia.jdownloader.ipv4 }}"
+    dest: "0.0.0.0/0"
+    proto: "tcp"
+    port: "{{ item }}"
+  loop: 
+    - "80"
+    - "443"
+  when: 
+    - features.multimedia.jdownloader.ipv4 is defined
+
+
+- name: "Create JDownloader volumes"
+  docker_volume:
+    name: "jdownloader_{{ item }}"
+    state: present
+  loop:
+    - "config"
+
+- name: "Create JDownloader container"
+  docker_container:
+    name: "multimedia.jdownloader"
+    state: present
+    restart_policy: unless-stopped
+    image: "jlesage/jdownloader-2:{{ jdownloader_version }}"
+    volumes:
+      - "jdownloader_config:/config"
+      - "{{ features.multimedia.media }}/cache/downloads:/output"
+    env:
+      TZ: "{{ timezone }}"
+      USER_ID: "10000"
+      GROUP_ID: "10000"
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.multimedia.network }}"
+      # traefik.enable: "true"
+      # traefik.http.routers.jdownloader.rule: "Host(`{{ features.multimedia.jdownloader.hostname }}`)"
+      # traefik.http.routers.jdownloader.entrypoints: "web"
+      # traefik.http.routers.jdownloader.middlewares: "httpsredirect@file"
+      # traefik.http.routers.jdownloader-ssl.rule: "Host(`{{ features.multimedia.jdownloader.hostname }}`)"
+      # traefik.http.routers.jdownloader-ssl.entrypoints: "websecure"
+      # traefik.http.routers.jdownloader-ssl.middlewares: "hsts@file,httpsredirect@file"
+      # traefik.http.routers.jdownloader-ssl.tls.certresolver: "letsencrypt"
+      # traefik.http.routers.jdownloader-ssl.tls.options: "intermediate@file"
+      # traefik.http.services.jdownloader-ssl.loadbalancer.server.port: "5800"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.multimedia.network }}"
+        ipv6_address: "{{ features.multimedia.jdownloader.ipv6 }}"
+        ipv4_address: "{{ features.multimedia.jdownloader.ipv4 | default(None, true) }}"
+    dns_servers: "{{ features.multimedia.jdownloader.dns_servers | default(None, true) }}"
+
+- name: "Start JDownloader container"
+  docker_container:
+    name: "multimedia.jdownloader"
+    state: started

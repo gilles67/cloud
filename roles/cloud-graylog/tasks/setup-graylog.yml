@@ -1,0 +1,42 @@
+---
+
+- name: "[Graylog] Create Graylog container"
+  docker_container:
+    name: "graylog.graylog"
+    state: present
+    restart_policy: unless-stopped
+    image: "graylog/graylog:{{ graylog_version }}"
+    volumes:
+
+    env:
+      TZ: "{{ timezone }}"
+      GRAYLOG_PASSWORD_SECRET: "{{ features.graylog.graylog.secret }}"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "{{ features.graylog.graylog.root_password | hash('sha256') }}"
+      GRAYLOG_HTTP_EXTERNAL_URI: "https://{{ features.graylog.dashboard.hostname }}"
+
+
+    labels:
+      one.h42.nhfw.enable: "true"
+      one.h42.nhfw.dns.register: "true"
+      one.h42.backup.enable: "false"
+      docker.network: "{{ features.graylog.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.graylog.rule: "Host(`{{ features.graylog.dashboard.hostname }}`)"
+      traefik.http.routers.graylog.entrypoints: "web"
+      traefik.http.routers.graylog.middlewares: "httpsredirect@file"
+      traefik.http.routers.graylog-ssl.rule: "Host(`{{ features.graylog.dashboard.hostname }}`)"
+      traefik.http.routers.graylog-ssl.entrypoints: "websecure"
+      traefik.http.routers.graylog-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.graylog-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.graylog-ssl.tls.options: "intermediate@file"
+      traefik.http.services.graylog-ssl.loadbalancer.server.port: "9000"
+    networks_cli_compatible: yes
+    networks:
+      - name: "{{ features.graylog.network }}"
+        ipv6_address: "{{ features.graylog.graylog.ipv6 }}"
+
+
+- name: "[Graylog] Start Graylog container"
+  docker_container:
+    name: "graylog.graylog"
+    state: started

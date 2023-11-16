@@ -61,6 +61,18 @@
       - "rustdesk_config:/root"
     env:
       TZ: "{{ timezone }}"
+    labels:
+      docker.network: "{{ features.rustdesk.network }}"
+      traefik.enable: "true"
+      traefik.http.routers.rustdesk.rule: "Host(`{{ features.rustdesk.hbbs.console }}`)"
+      traefik.http.routers.rustdesk.entrypoints: "web"
+      traefik.http.routers.rustdesk.middlewares: "httpsredirect@file"
+      traefik.http.routers.rustdesk-ssl.rule: "Host(`{{ features.rustdesk.hbbs.console }}`)"
+      traefik.http.routers.rustdesk-ssl.entrypoints: "websecure"
+      traefik.http.routers.rustdesk-ssl.middlewares: "hsts@file,httpsredirect@file"
+      traefik.http.routers.rustdesk-ssl.tls.certresolver: "letsencrypt"
+      traefik.http.routers.rustdesk-ssl.tls.options: "intermediate@file"
+      traefik.http.services.rustdesk-ssl.loadbalancer.server.port: "21114"
     command: 
       - "hbbs"
       - "-r {{ features.rustdesk.hbbr.hostname }}:21117"
@@ -68,6 +80,7 @@
     networks:
       - name: "{{ features.rustdesk.network }}"
         ipv6_address: "{{ features.rustdesk.hbbs.ipv6 }}"
+        ipv4_address: "{{ features.rustdesk.hbbs.ipv4 | default(None) }}"
 
 - name: "Create Rustdesk (hbbr) container"
   docker_container:
@@ -85,6 +98,7 @@
     networks:
       - name: "{{ features.rustdesk.network }}"
         ipv6_address: "{{ features.rustdesk.hbbr.ipv6 }}"
+        ipv4_address: "{{ features.rustdesk.hbbr.ipv4 | default(None) }}"
 
 - name: "Start Rustdesk (hbbr) container"
   docker_container:

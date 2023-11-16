@@ -1,3 +1,8 @@
 allow_anonymous true
 listener 1883
 protocol mqtt
+
+{% if current_item.broker.web_hostname is defined %}
+listener 80
+protocol websockets
+{% endif %}

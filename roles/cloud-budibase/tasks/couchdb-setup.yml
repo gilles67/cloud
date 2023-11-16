@@ -9,7 +9,7 @@
     name: "{{ features.budibase.name | default('budibase') }}.couchdb"
     state: present
     restart_policy: unless-stopped
-    image: "couchdb:{{ couchdb_version }}"
+    image: "ibmcom/couchdb3:{{ couchdb_version }}"
     volumes:
       - "{{ features.budibase.name | default('budibase') }}_couchdb_data:/opt/couchdb/data"
     env:

@@ -1,0 +1,3 @@
+---
+graylog_version: "4.3"
+mongodb_version: "4.4"

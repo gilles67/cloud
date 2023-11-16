@@ -1,0 +1,7 @@
+---
+- name: "Semaphore Ansible UI"
+  include: "semaphore-setup.yml"
+  when:     
+    - features is defined
+    - features.ansible is defined
+    - features.ansible.semaphore is defined

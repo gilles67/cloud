@@ -1,0 +1,6 @@
+---
+- name: "Setup Freeradius"
+  include: "setup-freeradius.yml"
+  when:     
+    - features is defined
+    - features.freeradius is defined

@@ -1,18 +1,22 @@
 ---
 - name: Create Backup Agent volume
   docker_volume:
-    name: "h42backup_agent_config"
+    name: "{{ item }}"
     state: present
+  loop:
+    - "h42backup_agent_config"
+    - "h42backup_agent_root"
 
 - name: Create backup container
   docker_container:
     name: "h42.backup-agent"
     state: present
     restart_policy: unless-stopped
-    image: "h42-backup/agent"
+    image: "gilles67/h42-backup-agent:{{ h42_backup_version }}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "h42backup_agent_config:/h42backup/config"
+      - "h42backup_agent_root:/root"
     env:
       TZ: "{{ timezone }}"
       H42BACKUP_HOSTNAME: "{{ inventory_hostname }}"
@@ -20,6 +24,7 @@
       H42BACKUP_PASSPHRASE: "{{ backup.borg.passphrase }}"
     labels:
       one.h42.backup.enable: "false"
+    command: "/h42backup/inf-loop"
 
 - name: Start backup container
   docker_container:

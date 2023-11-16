@@ -22,3 +22,9 @@
   when: 
     - features.multimedia is defined
     - features.multimedia.squid is defined
+
+- name: "JDownloader setup"
+  include: "jdownloader-setup.yml"
+  when: 
+    - features.multimedia is defined
+    - features.multimedia.jdownloader is defined

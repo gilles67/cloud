@@ -2,4 +2,5 @@
 - hosts: all
   roles:
     - asset-proxy
-    - cloud-rustdesk
+    - asset-auth
+    - home-hass
