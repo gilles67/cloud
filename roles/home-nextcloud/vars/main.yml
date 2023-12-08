@@ -1,4 +1,4 @@
 ---
-nextcloud_version: "25.0.4-apache"
-onlyoffice_ds_version: "6.3.0.111"
-collabora_version: "6.4.9.2"
+nextcloud_version: "27.1.4-apache"
+onlyoffice_ds_version: "7.5.1.1"
+collabora_version: "23.05.5.4.1"
