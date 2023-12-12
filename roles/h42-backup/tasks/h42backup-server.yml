@@ -35,7 +35,7 @@
   template:
     src: authorized_keys.j2
     dest: "/opt/cloud/backup/authorized_keys"
-    owner: 5000
+    owner: '5000'
     group: nogroup
     mode: '0644'
 
