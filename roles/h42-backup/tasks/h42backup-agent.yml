@@ -1,11 +1,20 @@
 ---
-- name: Create Backup Agent volume
+- name: Create Backup agent volume
   docker_volume:
     name: "{{ item }}"
     state: present
   loop:
     - "h42backup_agent_config"
     - "h42backup_agent_root"
+
+- name: Backup agent Firewall outbound
+  ufw:
+    rule: allow
+    route: yes
+    src: "{{ docker.network.docker0.ipv6 }}"
+    dest: "{{ backup.borg.repo_ipv6  }}"
+    proto: "tcp"
+    port: "22"
 
 - name: Create backup container
   docker_container:
@@ -24,9 +33,23 @@
       H42BACKUP_PASSPHRASE: "{{ backup.borg.passphrase }}"
     labels:
       one.h42.backup.enable: "false"
+    networks_cli_compatible: no
+    purge_networks: no
     command: "/h42backup/inf-loop"
 
 - name: Start backup container
   docker_container:
     name: "h42.backup-agent"
     state: started
+
+- name: Configure cron
+  ansible.builtin.cron:
+    name: h42backup all
+    hour: "{{ backup.borg.cron.hour }}"
+    minute: "{{ backup.borg.cron.minute }}"
+    job: "docker exec -t h42.backup-agent /h42backup/h42-backup-agent backup all"
+    user: "root"
+    cron_file: "h42backup-agent"
+  when:
+    - backup.borg.cron.hour is defined
+    - backup.borg.cron.minute is defined
