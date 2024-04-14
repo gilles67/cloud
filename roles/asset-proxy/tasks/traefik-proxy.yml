@@ -64,13 +64,10 @@
       traefik.http.routers.traefikssl.rule: "Host(`{{ current_item.proxy.hostname }}`)"
       traefik.http.routers.traefikssl.service: "api@internal"
       traefik.http.routers.traefikssl.middlewares: "hsts@file,httpsredirect@file"
-#      traefik.http.routers.traefikssl.middlewares: "traefikheaders,authtraefik,hsts@file,httpsredirect@file"
       traefik.http.routers.traefikssl.entrypoints: "websecure"
-#      traefik.http.middlewares.authtraefik.forwardauth.address: "https://{{ current_item.proxy.admin_authforward }}/forward/auth"
-#      traefik.http.middlewares.authtraefik.forwardauth.trustForwardHeader: "true"
-#      traefik.http.middlewares.traefikheaders.headers.customrequestheaders.X-Auth-Service: "{{ current_item.proxy.admin_hostname }}"
       traefik.http.routers.traefikssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.traefikssl.tls.options: "intermediate@file"
+    network_mode: "{{ current_item.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"
