@@ -52,6 +52,7 @@
       TZ: "{{ timezone }}"
     labels:
       one.h42.backup.enable: "false"
+    network_mode: "{{  features.backup.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{  features.backup.network }}"
