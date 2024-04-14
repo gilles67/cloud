@@ -4,6 +4,7 @@
   register: database_stat
   failed_when: no
   changed_when: no
+  check_mode: no
 
 ## not database_stat.rc == 0 -> when the database not exists : the "USE {{ dbname }};" return a exit code 1 -> database not exists.
 

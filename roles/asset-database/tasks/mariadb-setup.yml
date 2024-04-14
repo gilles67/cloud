@@ -36,6 +36,7 @@
       one.h42.backup.profile: "mariadb"
       one.h42.backup.mariadb.volume: "{{ current_item.name | default(fitem) | lower }}_mariadb_backup"
       docker.network: "{{ current_item.network }}"
+    network_mode: "{{ current_item.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"

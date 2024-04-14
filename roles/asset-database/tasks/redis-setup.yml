@@ -24,6 +24,7 @@
       one.h42.nhfw.enable: "true"
       one.h42.nhfw.dns.register: "true"
       docker.network: "{{ current_item.network }}"
+    network_mode: "{{ current_item.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"

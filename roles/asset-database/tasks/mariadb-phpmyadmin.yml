@@ -40,6 +40,7 @@
       traefik.http.routers.admindb-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.admindb-ssl.tls.options: "intermediate@file"
       traefik.http.services.admindb-ssl.loadbalancer.server.port: "80"
+    network_mode: "{{ current_item.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"
@@ -76,6 +77,7 @@
       traefik.http.routers.admindb-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.admindb-ssl.tls.options: "intermediate@file"
       traefik.http.services.admindb-ssl.loadbalancer.server.port: "80"
+    network_mode: "{{ current_item.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ current_item.network }}"
