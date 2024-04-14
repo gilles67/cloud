@@ -5,6 +5,7 @@
   register: key_dir_stat
   failed_when: not key_dir_stat.stderr == ""
   changed_when: no
+  check_mode: no
 
 - name: "Create zone key folder"
   shell: "docker exec domain.master mkdir -p /etc/bind/zones/key"
@@ -16,6 +17,7 @@
   register: db_dir_stat
   failed_when: not db_dir_stat.stderr == ""
   changed_when: no
+  check_mode: no
 
 - name: "Create zone db folder"
   shell: "docker exec domain.master mkdir -p /etc/bind/zones/db"

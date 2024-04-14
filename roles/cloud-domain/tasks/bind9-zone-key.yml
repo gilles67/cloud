@@ -4,6 +4,7 @@
   register: zone_key_stat
   failed_when: not zone_key_stat.stderr == ""
   changed_when: no
+  check_mode: no
 
 - name: "Generate zone key"
   shell: docker exec domain.master /bin/bash -c "/usr/sbin/tsig-keygen -a hmac-sha512 tsig-{{ zone }} > /etc/bind/zones/key/tsig-{{ zone }}.key"
@@ -14,6 +15,7 @@
   register: zone_db_stat
   failed_when: not zone_db_stat.stderr == ""
   changed_when: no
+  check_mode: no
 
 - name: "Generate domain zone file"
   template:
