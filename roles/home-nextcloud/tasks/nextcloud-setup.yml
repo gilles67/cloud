@@ -57,6 +57,7 @@
       traefik.http.routers.nextcloud-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.nextcloud-ssl.tls.options: "intermediate@file"
       traefik.http.services.nextcloud-ssl.loadbalancer.server.port: "80"
+    network_mode: "{{ features.nextcloud.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ features.nextcloud.network }}"

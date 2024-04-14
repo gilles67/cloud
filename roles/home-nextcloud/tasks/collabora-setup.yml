@@ -37,6 +37,7 @@
       traefik.http.routers.collabora-ssl.tls.certresolver: "letsencrypt"
       traefik.http.routers.collabora-ssl.tls.options: "intermediate@file"
       traefik.http.services.collabora-ssl.loadbalancer.server.port: "9980"
+    network_mode: "{{ features.nextcloud.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ features.nextcloud.network }}"
