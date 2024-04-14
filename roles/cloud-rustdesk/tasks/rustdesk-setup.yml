@@ -62,6 +62,9 @@
     env:
       TZ: "{{ timezone }}"
     labels:
+      one.h42.backup.enable: "true"
+      one.h42.backup.profile: "volume"
+      one.h42.backup.volume.include_bind: "false"
       docker.network: "{{ features.rustdesk.network }}"
       traefik.enable: "true"
       traefik.http.routers.rustdesk.rule: "Host(`{{ features.rustdesk.hbbs.console }}`)"
@@ -76,6 +79,7 @@
     command: 
       - "hbbs"
       - "-r {{ features.rustdesk.hbbr.hostname }}:21117"
+    network_mode: "{{ features.rustdesk.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ features.rustdesk.network }}"
@@ -94,6 +98,7 @@
       TZ: "{{ timezone }}"
     command: 
       - "hbbr"
+    network_mode: "{{ features.rustdesk.network }}"
     networks_cli_compatible: yes
     networks:
       - name: "{{ features.rustdesk.network }}"
