@@ -24,7 +24,7 @@
     loop_var: "file_config"
 
 - name: "Firewall bind9 recursive"
-  include: "bind9-recursive-firewall.yml"
+  ansible.builtin.include_tasks: "bind9-recursive-firewall.yml"
 
 - name: Create domain recursive bind9 container
   docker_container:

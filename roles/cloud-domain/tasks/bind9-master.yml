@@ -35,7 +35,7 @@
     mode: '0644'
 
 - name: "Firewall bind9 master"
-  include: "bind9-master-firewall.yml"
+  ansible.builtin.include_tasks: "bind9-master-firewall.yml"
 
 - name: Create domain bind9 container
   docker_container:
@@ -70,5 +70,5 @@
     state: started
 
 - name: "Zone file generating"
-  include: "bind9-master-zone.yml"
+  ansible.builtin.include_tasks: "bind9-master-zone.yml"
   when: features.domain.master.zones is defined

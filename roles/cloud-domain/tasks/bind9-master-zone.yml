@@ -29,7 +29,7 @@
 
 # Generate zone files
 - name: "Zone update key"
-  include: "bind9-zone-key.yml"
+  ansible.builtin.include_tasks: "bind9-zone-key.yml"
   loop: "{{ features.domain.master.zones }}"
   loop_control:
     loop_var: "zone"

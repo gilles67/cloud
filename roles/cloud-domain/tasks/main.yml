@@ -1,18 +1,18 @@
 ---
 - name: "Domain Bind9 (master) setup"
-  include: "bind9-master.yml"
+  ansible.builtin.include_tasks: "bind9-master.yml"
   when:     
     - features is defined
     - features.domain.master is defined
 
 - name: "Domain Bind9 (recursive) setup"
-  include: "bind9-recursive.yml"
+  ansible.builtin.include_tasks: "bind9-recursive.yml"
   when:     
     - features is defined
     - features.domain.recursive is defined
 
 - name: "NAT64 setup"
-  include: "tayga-nat64.yml"
+  ansible.builtin.include_tasks: "tayga-nat64.yml"
   when:     
     - features is defined
     - features.domain.nat64 is defined
